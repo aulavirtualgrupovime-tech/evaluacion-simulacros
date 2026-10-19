@@ -366,7 +366,7 @@ async function iniciar(){
 function pintarEstado(){
   $("#status").innerHTML=`<span class="pill ok">● Datos en su Google Drive</span>${S.ia?`<span class="pill ok">● Análisis con Gemini</span>`:'<span class="pill warn">● Análisis con IA sin configurar</span>'}
     <span style="flex:1"></span><button class="btn alt sm" id="bRec">Actualizar</button><button class="btn alt sm" id="bSal">Cerrar sesión</button>`;
-  $("#bRec").onclick=async()=>{try{await recargar();toast("Datos actualizados")}catch(e){toast(e.mensaje||String(e))}};
+  $("#bRec").onclick=async()=>{try{await conectar();toast("Datos actualizados")}catch(e){toast(e.mensaje||String(e))}};
   $("#bSal").onclick=()=>{CFG.clave="";lsSet("vime_sim_cfg",CFG);S.ready=false;S.est={};S.sim={};pantallaAcceso()};
 }
 
@@ -757,7 +757,8 @@ function parseJSON(t){
 }
 const LOTE_FOTOS=60;
 async function analizar(s,e,out,btn){
-  if(!S.ia){out.innerHTML='<div class="alert err">Falta configurar la clave de Gemini (GEMINI_API_KEY) en el servidor de Apps Script. Vea la guía de instalación.</div>';return}
+  if(!S.ia){ try{ const p=await api("ping"); S.ia=p.ia; S.modelo=p.modelo; pintarEstado() }catch(e){} }
+  if(!S.ia){out.innerHTML='<div class="alert err">El servidor no encuentra la clave de Gemini. En Apps Script → Configuración del proyecto → Propiedades del script, revise que la propiedad se llame exactamente <strong>GEMINI_API_KEY</strong> (mayúsculas, guiones bajos y sin espacios) y que el valor sea la clave de Google AI Studio. Después pulse de nuevo «Analizar evidencias».</div>';return}
   const gab=s.tipo==="De gabinete";
   const fotos=(s.fotos||[]).filter(f=>f.fileId);
   const vids=(s.videos||[]).map((v,i)=>({...v,etiqueta:"V"+(i+1),idx:i})).filter(v=>v.analizar!==false);
