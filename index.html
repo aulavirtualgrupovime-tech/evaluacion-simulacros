@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Evaluación de Simulacros VIME</title>
+<meta name="description" content="Grupo VIME · Evaluación de simulacros de Protección Civil de campo y de gabinete.">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="logo_aula.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Lexend:wght@300;400;500;600;700&display=swap">
+<style>
+/* Layout: banda corporativa con logotipos → migas → espacio de trabajo en tarjetas; un simulacro se trabaja en 4 pasos (Datos · Evidencias · Evaluación · Reporte). */
+:root{
+  --navy:#17325c; --navy-2:#24508f; --orange:#e2711d; --gold:#f0a81c; --silver:#6d6f73;
+  --ink:#1b2533; --muted:#536072; --bg:#f2f4f8; --card:#ffffff; --soft:#e9eef6; --line:#d3dbe7;
+  --on-navy:#ffffff;
+  --good:#1d7a4c; --good-bg:#e3f4ea; --reg:#9a6206; --reg-bg:#fdf1d8; --bad:#b42318; --bad-bg:#fbe5e2; --na:#5d6470; --na-bg:#eceef1;
+  --f-brand:'Atkinson Hyperlegible','Segoe UI',Arial,sans-serif;
+  --f-body:'Lexend','Segoe UI',Arial,sans-serif;
+  --r:12px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --navy:#9fc0f0; --navy-2:#7fa8e6; --orange:#f39a52; --gold:#f5c04f; --silver:#b9bcc2;
+  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0f1622; --card:#172131; --soft:#1e2b3f; --line:#2c3a50;
+  --on-navy:#0f1622;
+  --good:#6fd39e; --good-bg:#15352a; --reg:#f2c260; --reg-bg:#3a2f12; --bad:#ff8a7c; --bad-bg:#3d1c19; --na:#b3b9c3; --na-bg:#262f3d;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#9fc0f0; --navy-2:#7fa8e6; --orange:#f39a52; --gold:#f5c04f; --silver:#b9bcc2;
+  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0f1622; --card:#172131; --soft:#1e2b3f; --line:#2c3a50;
+  --on-navy:#0f1622;
+  --good:#6fd39e; --good-bg:#15352a; --reg:#f2c260; --reg-bg:#3a2f12; --bad:#ff8a7c; --bad-bg:#3d1c19; --na:#b3b9c3; --na-bg:#262f3d;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.6;font-weight:400;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.25;margin:0;font-family:var(--f-brand);font-weight:700}
+html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+[hidden]{display:none!important}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--navy-2)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Banda corporativa */
+.brand{background:var(--card);border-bottom:1px solid var(--line)}
+.brand .wrap{display:flex;align-items:center;gap:20px;padding-block:14px;flex-wrap:wrap}
+.plaque{background:#fff;border-radius:10px;padding:6px 10px;display:flex;align-items:center}
+.plaque img{display:block;height:64px;width:auto}
+.plaque.aula img{height:58px}
+.brand-title{flex:1;min-width:220px}
+.brand-title h1{font-size:clamp(1.6rem,3.4vw,2.25rem);color:var(--navy);letter-spacing:.3px}
+.brand-title p{color:var(--muted);font-size:1rem}
+.swoosh{height:5px;background:linear-gradient(90deg,var(--orange),var(--gold) 55%,transparent)}
+
+.statusbar{font-size:.92rem;color:var(--muted);padding-block:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 12px;font-size:.88rem;font-weight:500;border:1px solid var(--line);background:var(--card)}
+.pill.ok{color:var(--good);border-color:var(--good)}
+.pill.warn{color:var(--reg);border-color:var(--reg)}
+
+main{padding-block:10px 64px}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:1rem;margin-bottom:14px;color:var(--muted)}
+.crumbs button{background:none;border:0;padding:0;color:var(--navy-2);text-decoration:underline;cursor:pointer;font-size:1rem}
+.head{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.head h2{font-size:clamp(1.6rem,3vw,2.1rem);color:var(--navy);font-weight:600}
+.head .sub{color:var(--muted)}
+.eyebrow{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--orange);font-weight:600}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 20px;border-radius:10px;border:2px solid var(--navy);background:var(--navy);color:var(--on-navy);font-weight:600;font-size:1.02rem;cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.btn.alt{background:transparent;color:var(--navy)}
+.btn.orange{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn.sm{min-height:40px;padding:6px 14px;font-size:.95rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+
+/* Tarjetas de establecimiento */
+.est{display:flex;flex-direction:column;gap:12px;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit}
+.est:hover{border-color:var(--navy-2)}
+.est h3{font-size:1.25rem;color:var(--navy)}
+.est .rs{color:var(--muted);font-size:.98rem}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:.85rem;font-weight:600;padding:3px 10px;border-radius:6px;background:var(--soft);color:var(--ink)}
+.tag.alto{background:var(--bad-bg);color:var(--bad)}
+.tag.ord{background:var(--good-bg);color:var(--good)}
+.tag.sci{background:var(--soft);color:var(--navy-2)}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:.98rem}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+
+.empty{border:2px dashed var(--line);border-radius:var(--r);padding:36px 24px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:14px;align-items:center}
+.empty strong{color:var(--ink);font-size:1.15rem}
+
+/* Formularios */
+.form{display:grid;gap:18px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label,.lbl{font-weight:600;font-size:1rem}
+.field .hint{font-size:.9rem;color:var(--muted)}
+input[type=text],input[type=number],input[type=datetime-local],input[type=date],input[type=url],select,textarea{width:100%;min-height:50px;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);font-size:1.02rem}
+textarea{min-height:120px;resize:vertical;line-height:1.55}
+textarea.guion{min-height:340px;font-size:1rem}
+input:focus,select:focus,textarea:focus{border-color:var(--navy-2);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--navy-2) 25%,transparent)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:inline-flex;align-items:center;min-height:48px;padding:8px 18px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:500;background:var(--card)}
+.seg input:checked+label{border-color:var(--navy);background:var(--navy);color:var(--on-navy)}
+.seg input:focus-visible+label{outline:3px solid var(--gold);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:4px 14px;font-size:.92rem;cursor:pointer}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+legend{padding:0;margin-bottom:6px}
+
+/* Pasos */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.step{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.step .n{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.step .t{font-weight:600;font-size:1.05rem}
+.step .s{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step.on{border-color:var(--navy);box-shadow:inset 0 -4px 0 var(--orange)}
+.step.done .n{color:var(--good)}
+@media (max-width:640px){.steps{grid-template-columns:1fr 1fr}}
+
+/* Evidencias */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.thumb{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);display:flex;flex-direction:column}
+.thumb .img{position:relative;aspect-ratio:4/3;background:var(--soft)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .no{position:absolute;top:6px;left:6px;background:var(--navy);color:var(--on-navy);font-weight:700;border-radius:6px;padding:0 8px;font-size:.85rem}
+.thumb .src{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:0 8px;font-size:.78rem}
+.thumb .body{padding:8px;display:flex;flex-direction:column;gap:6px}
+.thumb input{min-height:40px;font-size:.9rem;padding:6px 10px}
+.thumb .x{align-self:flex-end;background:none;border:0;color:var(--bad);cursor:pointer;font-size:.88rem;text-decoration:underline}
+.drop{border:2px dashed var(--navy-2);border-radius:var(--r);padding:26px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;background:color-mix(in srgb,var(--soft) 60%,transparent)}
+.drop.over{background:var(--soft)}
+.vlist{display:flex;flex-direction:column;gap:10px}
+.vitem{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.vitem a{overflow-wrap:anywhere;flex:1;min-width:0}
+.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.frame{position:relative;border:2px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer}
+.frame.sel{border-color:var(--orange)}
+.frame img{display:block;width:100%}
+.frame span{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.65);color:#fff;font-size:.78rem;border-radius:4px;padding:0 6px}
+
+/* Evaluación */
+.score{display:flex;flex-wrap:wrap;gap:16px;align-items:stretch}
+.score .big{flex:1 1 220px;display:flex;flex-direction:column;gap:4px}
+.score .big .v{font-size:2.6rem;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1.1}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--soft)}
+.bar i{display:block;height:100%}
+.counts{display:flex;gap:10px;flex-wrap:wrap}
+.cal{display:inline-flex;align-items:center;font-weight:700;font-size:.9rem;border-radius:6px;padding:2px 10px}
+.cal.Bueno{background:var(--good-bg);color:var(--good)}
+.cal.Regular{background:var(--reg-bg);color:var(--reg)}
+.cal.Malo{background:var(--bad-bg);color:var(--bad)}
+.cal.NA,.cal.Pendiente{background:var(--na-bg);color:var(--na)}
+.punto{border:1px solid var(--line);border-left:6px solid var(--line);border-radius:var(--r);background:var(--card);padding:18px 20px;display:grid;gap:12px}
+.punto.Bueno{border-left-color:var(--good)}
+.punto.Regular{border-left-color:var(--reg)}
+.punto.Malo{border-left-color:var(--bad)}
+.punto.NA{border-left-color:var(--na)}
+.punto h4{font-size:1.15rem;color:var(--navy);display:flex;gap:10px;align-items:baseline}
+.punto h4 .k{font-variant-numeric:tabular-nums;color:var(--orange);font-weight:700}
+.crit{font-size:.92rem;color:var(--muted)}
+.rate{display:flex;flex-wrap:wrap;gap:8px}
+.rate input{position:absolute;opacity:0;pointer-events:none}
+.rate label{min-height:44px;display:inline-flex;align-items:center;padding:6px 16px;border-radius:8px;border:1.5px solid var(--line);cursor:pointer;font-weight:600}
+.rate input:checked+label.rb{background:var(--good);border-color:var(--good);color:var(--card)}
+.rate input:checked+label.rr{background:var(--reg);border-color:var(--reg);color:var(--card)}
+.rate input:checked+label.rm{background:var(--bad);border-color:var(--bad);color:var(--card)}
+.rate input:checked+label.rn{background:var(--na);border-color:var(--na);color:var(--card)}
+.rate input:focus-visible+label{outline:3px solid var(--gold);outline-offset:2px}
+.ev{font-size:.88rem;color:var(--muted)}
+.conf{font-size:.82rem;color:var(--muted)}
+.ai{border:1.5px solid var(--navy-2);background:color-mix(in srgb,var(--soft) 70%,var(--card));border-radius:var(--r);padding:20px;display:grid;gap:12px}
+.ai h3{color:var(--navy);font-size:1.2rem}
+.progress{font-size:.98rem;color:var(--navy-2);font-weight:500;min-height:1.6em}
+.note{font-size:.95rem;color:var(--muted)}
+.alert{border-radius:10px;padding:12px 16px;font-size:.98rem}
+.alert.warn{background:var(--reg-bg);color:var(--ink);border:1px solid var(--reg)}
+.alert.err{background:var(--bad-bg);color:var(--ink);border:1px solid var(--bad)}
+.alert.ok{background:var(--good-bg);color:var(--ink);border:1px solid var(--good)}
+.timebox{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-variant-numeric:tabular-nums}
+
+table.list{width:100%;border-collapse:collapse;font-size:1rem}
+table.list th,table.list td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.list th{font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+table.list tr.click{cursor:pointer}
+table.list tr.click:hover td{background:var(--soft)}
+.tbl{overflow-x:auto}
+
+/* Diálogo propio */
+.modal{position:fixed;inset:0;background:rgba(10,18,32,.55);display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:auto;z-index:50}
+.modal .card{width:100%;max-width:720px;display:grid;gap:18px}
+.modal h3{font-size:1.4rem;color:var(--navy)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
+footer{color:var(--muted);font-size:.9rem;padding-block:24px;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="brand">
+  <div class="wrap">
+    <div class="plaque"><img src="logo_gv.png" alt="Grupo VIME · Asesoría Corporativa Integral"></div>
+    <div class="brand-title">
+      <h1>Evaluación de Simulacros</h1>
+      <p>Protección Civil · Simulacros de campo y de gabinete</p>
+    </div>
+    <div class="plaque aula"><img src="logo_aula.png" alt="Aula Virtual Grupo VIME"></div>
+  </div>
+  <div class="swoosh"></div>
+</header>
+<div class="wrap statusbar" id="status"><span class="pill">Conectando con su almacenamiento en línea…</span></div>
+<main class="wrap" id="app"></main>
+<footer><div class="wrap">Grupo VIME · Asesoría Corporativa Integral · Aula Virtual Grupo VIME · www.aulavirtualgrupovime.com · contacto@grupovimeconsultoria.com</div></footer>
+<div id="layer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script>
+"use strict";
+/* ===================== Contenido técnico ===================== */
+const PUNTOS = [
+ {n:1,t:"Sistema de alertamiento o alarma",c:"Alerta sísmica o alarma audible y/o visible (voz, silbato, sirena, timbre, megáfono). Se percibe en todo el inmueble e inicia la respuesta."},
+ {n:2,t:"Evacuación",c:"Total o parcial según lo planeado. Debe tardar menos de 3 minutos; con alerta sísmica, 50 segundos como máximo. Personas dirigidas por rutas de evacuación hacia los puntos de reunión, con orden y sin correr."},
+ {n:3,t:"Activación de brigadas",c:"Brigadistas identificados (chaleco, brazalete, casco, gorra). Participación activa y con equipo: extintores, botiquín, radio portátil, camilla. Pase de lista de brigadas en instalaciones."},
+ {n:4,t:"Instalaciones",c:"Puesto de Mando, Centro de Triage y Puntos de Reunión, debidamente señalizados. Con SCI: Puesto de Comando (PC), Área de Concentración de Víctimas (ACV) y Área de Espera (AE)."},
+ {n:5,t:"Implementación del SCI",c:"Comandante del Incidente identificado, estructura y funciones del Sistema de Comando de Incidentes, terminología SCI, formularios ICS-201, ICS-207 e ICS-211 (NOM-010-SSPC-2019)."},
+ {n:6,t:"Conteo de personas evacuadas",c:"Personas formadas en el punto de reunión, de preferencia en filas, para un conteo ágil y confiable; reporte del conteo a la coordinación."},
+ {n:7,t:"Atención de la emergencia",c:"Respuesta a la hipótesis y al escenario: combate de fuego, atención de lesionados, búsqueda y rescate, corte de suministros, comunicación y solicitud de apoyo externo."},
+ {n:8,t:"Participación de usuarios y visitantes",c:"Población fija y flotante participa con orden y atiende indicaciones; atención prioritaria de adultos mayores, personas con discapacidad y niños."},
+ {n:9,t:"Revisión de instalaciones y evaluación de daños",c:"Recorrido de revisión por brigadas (búsqueda y rescate, combate de incendios) para evaluar daños y condiciones seguras antes del retorno."},
+ {n:10,t:"Vuelta a la normalidad",c:"Señal de fin del simulacro, retorno ordenado y supervisado, desmovilización de recursos, retiro de escenografía y reunión de retroalimentación."}
+];
+const ACT_GAB = [
+ {n:1,t:"Inicio y pase de lista de participantes"},
+ {n:2,t:"Lectura del guion y la cronología"},
+ {n:3,t:"Debate y observaciones al guion y la cronología"},
+ {n:4,t:"Fin del simulacro y llenado de formatos de evaluación"}
+];
+const HIPOTESIS = ["Sismo","Incendio","Incendio con lesionado","Sismo con lesionado","Fuga de gas","Amenaza de bomba","Inundación","Derrame de sustancia química"];
+const CALS = ["Bueno","Regular","Malo"];
+const VAL = {Bueno:2,Regular:1,Malo:0};
+
+/* ===================== Utilidades ===================== */
+const $ = (s,el=document)=>el.querySelector(s);
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const hoyISO = ()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+function fFecha(iso,conHora=true){
+  if(!iso) return "—";
+  const d=new Date(iso.length===10?iso+"T12:00":iso); if(isNaN(d)) return iso;
+  const f=d.toLocaleDateString("es-MX",{day:"2-digit",month:"long",year:"numeric"});
+  return conHora&&iso.length>10? f+", "+d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit",hour12:false})+" h" : f;
+}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function esSismo(sim){return sim.alertaSismica===true}
+function limiteEvac(sim){return esSismo(sim)?50:180}
+function parseMMSS(s){if(!s)return null;s=String(s).trim();const m=s.match(/^(\d{1,3}):(\d{1,2})$/);if(m)return (+m[1])*60+(+m[2]);const n=parseFloat(s);return isNaN(n)?null:n}
+function fmtSeg(n){if(n==null)return "—";const m=Math.floor(n/60),s=Math.round(n%60);return m+" min "+String(s).padStart(2,"0")+" s"}
+
+/* ===================== Servidor (Google Apps Script) ===================== */
+// Enlace del servidor de Apps Script (implementación como aplicación web). Si queda vacío, la app lo pide al entrar.
+const SERVIDOR_URL = "";
+const S = {est:{}, sim:{}, blobs:new Map(), urls:new Map(), ready:false, ia:false, modelo:""};
+let CFG = lsGet("vime_sim_cfg",{url:SERVIDOR_URL,clave:""});
+if(SERVIDOR_URL) CFG.url=SERVIDOR_URL;
+
+async function api(accion,datos={}){
+  let r;
+  try{ r=await fetch(CFG.url,{method:"POST",body:JSON.stringify({...datos,accion,clave:CFG.clave}),redirect:"follow"}) }
+  catch(e){ throw {error:"red",mensaje:"No hay conexión con el servidor. Revise su internet."} }
+  let j; try{ j=await r.json() }catch(e){ throw {error:"red",mensaje:"El servidor no respondió correctamente (código "+r.status+"). Revise el enlace del servidor."} }
+  if(!j.ok){ if(j.error==="clave"){ CFG.clave=""; lsSet("vime_sim_cfg",CFG); S.ready=false; pantallaAcceso("La clave de acceso no es correcta.") } throw j }
+  return j;
+}
+async function guardar(col,id,obj){
+  obj={...obj}; delete obj.id; obj.actualizado=new Date().toISOString();
+  const map=col==="establecimientos"?S.est:S.sim;
+  map[id]={...obj,id};
+  try{ await api("guardar",{col,id,obj}) }
+  catch(e){ toast("No se pudo guardar: "+(e.mensaje||e.message||e)); throw e }
+}
+async function borrar(col,id){
+  const map=col==="establecimientos"?S.est:S.sim; delete map[id];
+  try{ await api("borrar",{col,id}) }catch(e){ toast("No se pudo eliminar: "+(e.mensaje||e)) }
+}
+/* Caché de fotos en el navegador (IndexedDB) para no descargarlas cada vez */
+const IDB={db:null,
+  async abrir(){ if(this.db) return this.db; this.db=await new Promise((res,rej)=>{const q=indexedDB.open("vime_sim_fotos",1);q.onupgradeneeded=()=>q.result.createObjectStore("f");q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}); return this.db },
+  async get(k){ try{const db=await this.abrir();return await new Promise(r=>{const q=db.transaction("f").objectStore("f").get(k);q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)})}catch(e){return null} },
+  async put(k,v){ try{const db=await this.abrir();db.transaction("f","readwrite").objectStore("f").put(v,k)}catch(e){} }
+};
+function b64aBlob(b64,mime){const bin=atob(b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:mime||"image/jpeg"})}
+function blobAB64(b){return new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result).split(",")[1]);fr.readAsDataURL(b)})}
+async function fotoBlob(f){
+  if(S.blobs.has(f.fileId)) return S.blobs.get(f.fileId);
+  let b=await IDB.get(f.fileId);
+  if(!b){ const r=await api("foto",{fileId:f.fileId}); b=b64aBlob(r.b64,r.mime); IDB.put(f.fileId,b) }
+  S.blobs.set(f.fileId,b); return b;
+}
+function fotoURL(f){
+  if(S.urls.has(f.fileId)) return S.urls.get(f.fileId);
+  return "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+}
+let cargandoMini=false,otraVez=false;
+async function cargarMiniaturas(){
+  if(cargandoMini){otraVez=true;return} cargandoMini=true;
+  try{
+    const imgs=[...document.querySelectorAll("img[data-fid]")].filter(i=>!S.urls.has(i.dataset.fid));
+    const tareas=[...new Set(imgs.map(i=>i.dataset.fid))];
+    const trabajador=async()=>{ while(tareas.length){ const fid=tareas.shift();
+      try{ const b=await fotoBlob({fileId:fid}); S.urls.set(fid,URL.createObjectURL(b)); document.querySelectorAll(`img[data-fid="${fid}"]`).forEach(i=>i.src=S.urls.get(fid)) }catch(e){} } };
+    await Promise.all([trabajador(),trabajador(),trabajador()]);
+  }finally{ cargandoMini=false; if(otraVez){otraVez=false;cargarMiniaturas()} }
+}
+
+function pantallaAcceso(msg){
+  $("#status").innerHTML="";
+  $("#app").innerHTML=`<form class="card form" id="fAcc" style="max-width:560px;margin:24px auto">
+    <div><div class="eyebrow">Acceso</div><h2 style="color:var(--navy);font-size:1.7rem">Ingrese a la app</h2></div>
+    ${msg?`<div class="alert err">${esc(msg)}</div>`:""}
+    ${SERVIDOR_URL?"":`<div class="field"><label for="aUrl">Enlace del servidor</label><input type="url" id="aUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(CFG.url)}"><span class="hint">Es el enlace de la aplicación web de Google Apps Script (ver la guía de instalación).</span></div>`}
+    <div class="field"><label for="aClave">Clave de acceso</label><input type="password" id="aClave" autocomplete="current-password"></div>
+    <label><input type="checkbox" id="aRec" checked> Recordar en este navegador</label>
+    <div class="row"><button class="btn" type="submit">Entrar</button></div>
+    <p class="progress" id="aProg"></p>
+  </form>`;
+  setTimeout(()=>$("#aClave")?.focus(),30);
+  $("#fAcc").onsubmit=async ev=>{ev.preventDefault();
+    if(!SERVIDOR_URL) CFG.url=$("#aUrl").value.trim();
+    CFG.clave=$("#aClave").value;
+    if(!/^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)[:\/])/.test(CFG.url)){ $("#aProg").textContent="Escriba el enlace del servidor (inicia con https://)."; return }
+    $("#aProg").textContent="Conectando…";
+    try{ await conectar(); if($("#aRec").checked) lsSet("vime_sim_cfg",CFG); else lsSet("vime_sim_cfg",{url:CFG.url,clave:""}) }
+    catch(e){ if(e.error!=="clave") $("#aProg").textContent=e.mensaje||String(e) }
+  };
+}
+async function conectar(){
+  const p=await api("ping"); S.ia=p.ia; S.modelo=p.modelo;
+  await recargar();
+}
+async function recargar(){
+  const d=await api("listar");
+  S.est={};S.sim={};
+  (d.establecimientos||[]).forEach(o=>S.est[o.id]=o);
+  (d.simulacros||[]).forEach(o=>S.sim[o.id]=o);
+  S.ready=true; pintarEstado(); render();
+}
+async function iniciar(){
+  if(!CFG.url||!CFG.clave) return pantallaAcceso();
+  $("#app").innerHTML='<p class="progress">Conectando con su Google Drive…</p>';
+  try{ await conectar() }catch(e){ if(e.error!=="clave") pantallaAcceso(e.mensaje||String(e)) }
+}
+function pintarEstado(){
+  $("#status").innerHTML=`<span class="pill ok">● Datos en su Google Drive</span>${S.ia?`<span class="pill ok">● Análisis con Gemini</span>`:'<span class="pill warn">● Análisis con IA sin configurar</span>'}
+    <span style="flex:1"></span><button class="btn alt sm" id="bRec">Actualizar</button><button class="btn alt sm" id="bSal">Cerrar sesión</button>`;
+  $("#bRec").onclick=async()=>{try{await recargar();toast("Datos actualizados")}catch(e){toast(e.mensaje||String(e))}};
+  $("#bSal").onclick=()=>{CFG.clave="";lsSet("vime_sim_cfg",CFG);S.ready=false;S.est={};S.sim={};pantallaAcceso()};
+}
+
+/* ===================== Navegación ===================== */
+let V = lsGet("vime_sim_view",{v:"inicio"});
+function ir(v){V=v;lsSet("vime_sim_view",V);render();window.scrollTo({top:0})}
+let editando=false;
+document.addEventListener("focusin",e=>{if(e.target.matches("input,textarea,select"))editando=true});
+document.addEventListener("focusout",()=>{editando=false;setTimeout(()=>{if(!editando&&pendienteRender){pendienteRender=false;render()}},50)});
+let pendienteRender=false;
+function renderSoft(){if(editando||trabajando){pendienteRender=true;return}render()}
+let trabajando=false;
+
+function render(){
+  const app=$("#app");
+  if(!S.ready) return;
+  if(V.v==="est"&&S.est[V.id]) vistaEst(app,S.est[V.id]);
+  else if(V.v==="sim"&&S.sim[V.id]&&S.est[S.sim[V.id].estId]) vistaSim(app,S.sim[V.id]);
+  else vistaInicio(app);
+  cargarMiniaturas();
+}
+
+/* ===================== Vista: Establecimientos ===================== */
+function simsDe(estId){return Object.values(S.sim).filter(s=>s.estId===estId).sort((a,b)=>(b.fechaHora||"").localeCompare(a.fechaHora||""))}
+function vistaInicio(app){
+  const lista=Object.values(S.est).sort((a,b)=>(a.nombreComercial||a.razonSocial||"").localeCompare(b.nombreComercial||b.razonSocial||"","es"));
+  const q=(V.q||"").toLowerCase();
+  const fil=lista.filter(e=>!q||[e.razonSocial,e.nombreComercial,e.direccion,e.nrpc].join(" ").toLowerCase().includes(q));
+  app.innerHTML=`
+  <div class="head">
+    <div><div class="eyebrow">Paso inicial</div><h2>Establecimientos</h2><p class="sub">Registre cada establecimiento una sola vez y evalúe todos sus simulacros.</p></div>
+    <button class="btn orange" id="nuevoEst">+ Nuevo establecimiento</button>
+  </div>
+  ${lista.length?`<div class="field" style="margin-bottom:16px;max-width:520px"><label for="buscar">Buscar</label><input type="text" id="buscar" placeholder="Nombre, razón social, NRPC o dirección" value="${esc(V.q||"")}"></div>`:""}
+  ${lista.length?`<div class="grid g2">${fil.map(e=>{const ss=simsDe(e.id);const ult=ss[0];return `
+    <button class="card est" data-id="${e.id}">
+      <div><h3>${esc(e.nombreComercial||e.razonSocial)}</h3><div class="rs">${esc(e.razonSocial)}</div></div>
+      <div class="tags"><span class="tag ${e.riesgo==="Alto"?"alto":"ord"}">Riesgo ${esc(e.riesgo)}</span><span class="tag sci">SCI: ${esc(e.sci)}</span>${e.nrpc?`<span class="tag">NRPC ${esc(e.nrpc)}</span>`:""}</div>
+      <dl class="kv"><dt>Dirección</dt><dd>${esc(e.direccion||"—")}</dd><dt>Simulacros</dt><dd>${ss.length}${ult?` · último: ${fFecha(ult.fechaHora,false)}`:""}</dd></dl>
+    </button>`}).join("")}</div>`
+  :`<div class="empty"><strong>Aún no hay establecimientos</strong><p>Agregue el primero con su Razón Social, Nombre Comercial, Dirección, NRPC, tipo de riesgo y si aplica el Sistema de Comando de Incidentes.</p><button class="btn" id="nuevoEst2">Agregar establecimiento</button></div>`}
+  ${lista.length&&!fil.length?'<p class="note">Ningún establecimiento coincide con la búsqueda.</p>':""}`;
+  app.querySelectorAll(".est").forEach(b=>b.onclick=()=>ir({v:"est",id:b.dataset.id}));
+  const nb=()=>formEst(); $("#nuevoEst").onclick=nb; if($("#nuevoEst2"))$("#nuevoEst2").onclick=nb;
+  const bu=$("#buscar"); if(bu) bu.oninput=()=>{V.q=bu.value;const pos=bu.selectionStart;vistaInicio(app);const b2=$("#buscar");b2.focus();b2.setSelectionRange(pos,pos)};
+}
+
+function modal(html){const l=$("#layer");l.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><div class="card">${html}</div></div>`;const m=l.firstChild;m.addEventListener("click",e=>{if(e.target===m)cerrar()});document.addEventListener("keydown",escCerrar);return m}
+function escCerrar(e){if(e.key==="Escape")cerrar()}
+function cerrar(){$("#layer").innerHTML="";document.removeEventListener("keydown",escCerrar)}
+function confirmar(titulo,texto,accion,etiqueta="Eliminar"){
+  const m=modal(`<h3>${esc(titulo)}</h3><p>${esc(texto)}</p><div class="row"><button class="btn danger" id="okC">${esc(etiqueta)}</button><button class="btn alt" id="noC">Cancelar</button></div>`);
+  $("#noC",m).onclick=cerrar;$("#okC",m).onclick=async()=>{cerrar();await accion()};
+}
+function seg(name,ops,val){return `<div class="seg">${ops.map((o,i)=>`<input type="radio" id="${name}_${i}" name="${name}" value="${esc(o)}" ${o===val?"checked":""}><label for="${name}_${i}">${esc(o)}</label>`).join("")}</div>`}
+function leerSeg(root,name){const r=root.querySelector(`input[name="${name}"]:checked`);return r?r.value:""}
+
+function formEst(e){
+  const x=e||{riesgo:"Ordinario",sci:"No Aplica"};
+  const m=modal(`<h3>${e?"Editar establecimiento":"Nuevo establecimiento"}</h3>
+  <form class="form" id="fEst">
+    <div class="field"><label for="rs">Razón Social</label><input type="text" id="rs" required value="${esc(x.razonSocial)}"></div>
+    <div class="field"><label for="nc">Nombre Comercial</label><input type="text" id="nc" value="${esc(x.nombreComercial)}"></div>
+    <div class="field"><label for="dir">Dirección</label><textarea id="dir" style="min-height:90px">${esc(x.direccion)}</textarea></div>
+    <div class="field"><label for="nrpc">NRPC <span class="hint">(Número de Registro de Protección Civil)</span></label><input type="text" id="nrpc" value="${esc(x.nrpc)}"></div>
+    <fieldset class="field"><legend class="lbl">Tipo de riesgo</legend>${seg("riesgo",["Alto","Ordinario"],x.riesgo)}</fieldset>
+    <fieldset class="field"><legend class="lbl">Sistema de Comando de Incidentes (SCI)</legend>${seg("sci",["Aplica","No Aplica"],x.sci)}<span class="hint">En establecimientos de riesgo alto el SCI debe contemplarse con PC, AE y ACV.</span></fieldset>
+    <div class="row"><button class="btn" type="submit">Guardar establecimiento</button><button class="btn alt" type="button" id="canc">Cancelar</button></div>
+  </form>`);
+  $("#canc",m).onclick=cerrar;
+  $("#fEst",m).onsubmit=async ev=>{ev.preventDefault();
+    const id=e?e.id:uid();
+    const o={razonSocial:$("#rs",m).value.trim(),nombreComercial:$("#nc",m).value.trim(),direccion:$("#dir",m).value.trim(),nrpc:$("#nrpc",m).value.trim(),riesgo:leerSeg(m,"riesgo"),sci:leerSeg(m,"sci"),creado:e?.creado||new Date().toISOString()};
+    if(!o.razonSocial){toast("Escriba la Razón Social");return}
+    cerrar();await guardar("establecimientos",id,o);toast("Establecimiento guardado");ir({v:"est",id});
+  };
+  setTimeout(()=>$("#rs",m).focus(),30);
+}
+
+/* ===================== Vista: Establecimiento ===================== */
+function califGlobal(ev){
+  const ps=(ev?.puntos||[]).filter(p=>p.cal in VAL);
+  if(!ps.length) return null;
+  const pct=Math.round(ps.reduce((a,p)=>a+VAL[p.cal],0)/(ps.length*2)*100);
+  return {pct,txt:pct>=85?"Bueno":pct>=60?"Regular":"Malo",n:ps.length};
+}
+function vistaEst(app,e){
+  const ss=simsDe(e.id);
+  app.innerHTML=`
+  <nav class="crumbs"><button id="cIni">Establecimientos</button><span>›</span><span>${esc(e.nombreComercial||e.razonSocial)}</span></nav>
+  <div class="head"><div><div class="eyebrow">Establecimiento</div><h2>${esc(e.nombreComercial||e.razonSocial)}</h2></div>
+  <div class="row"><button class="btn alt sm" id="edE">Editar datos</button><button class="btn danger sm" id="delE">Eliminar</button></div></div>
+  <div class="grid g2" style="margin-bottom:24px">
+    <div class="card"><dl class="kv">
+      <dt>Razón Social</dt><dd>${esc(e.razonSocial)}</dd>
+      <dt>Nombre Comercial</dt><dd>${esc(e.nombreComercial||"—")}</dd>
+      <dt>Dirección</dt><dd>${esc(e.direccion||"—")}</dd>
+      <dt>NRPC</dt><dd>${esc(e.nrpc||"—")}</dd>
+      <dt>Tipo de riesgo</dt><dd><span class="tag ${e.riesgo==="Alto"?"alto":"ord"}">${esc(e.riesgo)}</span></dd>
+      <dt>SCI</dt><dd><span class="tag sci">${esc(e.sci)}</span></dd>
+    </dl></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <h3 style="color:var(--navy);font-size:1.15rem">Obligación de referencia</h3>
+      <p class="note">${e.riesgo==="Alto"?"Riesgo alto: NOM-002-STPS-2010 pide al menos dos simulacros de incendio al año; en Morelos (art. 81 LEPCM) seis simulacros al año, dos de ellos de evacuación por sismo.":"Riesgo ordinario: NOM-002-STPS-2010 pide al menos un simulacro de incendio al año; en Morelos (art. 81 LEPCM) seis simulacros al año, dos de ellos de evacuación por sismo."}</p>
+      <p class="note">Simulacros registrados: <strong>${ss.length}</strong></p>
+    </div>
+  </div>
+  <div class="head"><div><h2 style="font-size:1.5rem">Simulacros</h2></div><button class="btn orange" id="nuevoSim">+ Nuevo simulacro</button></div>
+  ${ss.length?`<div class="card tbl" style="padding:6px 14px"><table class="list"><thead><tr><th>No.</th><th>Fecha y hora</th><th>Tipo</th><th>Hipótesis</th><th>Evaluación</th></tr></thead><tbody>
+  ${ss.map(s=>{const g=califGlobal(s.evaluacion);return `<tr class="click" data-id="${s.id}" tabindex="0"><td><strong>${esc(s.numero||"—")}</strong></td><td>${fFecha(s.fechaHora)}</td><td>${esc(s.tipo)}</td><td>${esc(s.hipotesis||"—")}</td><td>${g?`<span class="cal ${g.txt}">${g.txt} · ${g.pct}%</span>`:'<span class="cal Pendiente">Pendiente</span>'}</td></tr>`}).join("")}
+  </tbody></table></div>`:`<div class="empty"><strong>Sin simulacros registrados</strong><p>Cree el simulacro, llene su checklist de datos, cargue fotos o videos y obtenga la evaluación.</p></div>`}`;
+  $("#cIni").onclick=()=>ir({v:"inicio"});
+  $("#edE").onclick=()=>formEst(e);
+  $("#delE").onclick=()=>confirmar("Eliminar establecimiento",`Se eliminará «${e.nombreComercial||e.razonSocial}» y sus ${ss.length} simulacro(s). Esta acción no se puede deshacer.`,async()=>{for(const s of ss){await borrarFotos(s);await borrar("simulacros",s.id)}await borrar("establecimientos",e.id);toast("Establecimiento eliminado");ir({v:"inicio"})});
+  $("#nuevoSim").onclick=async()=>{
+    const id=uid();const n=ss.length+1;
+    await guardar("simulacros",id,{estId:e.id,numero:String(n),fechaHora:"",tipo:"De campo",hipotesis:"",alertaSismica:false,evacuacion:"Total",programacion:"Con previo aviso",guion:"",medidos:{},fotos:[],videos:[],evaluacion:null,creado:new Date().toISOString()});
+    ir({v:"sim",id,paso:1});
+  };
+  app.querySelectorAll("tr.click").forEach(t=>{t.onclick=()=>ir({v:"sim",id:t.dataset.id,paso:1});t.onkeydown=ev=>{if(ev.key==="Enter")t.click()}});
+}
+async function borrarFotos(s){for(const f of s.fotos||[]){if(f.fileId)try{await api("borrarFoto",{fileId:f.fileId})}catch(e){}}}
+
+/* ===================== Vista: Simulacro ===================== */
+function vistaSim(app,s){
+  const e=S.est[s.estId];
+  const paso=V.paso||1;
+  const ev=s.evaluacion; const g=califGlobal(ev);
+  const pasos=[
+    {t:"Datos del simulacro",s:s.fechaHora?`${s.tipo} · ${s.hipotesis||"sin hipótesis"}`:"Checklist por llenar",d:!!(s.fechaHora&&s.hipotesis)},
+    {t:"Evidencias",s:s.tipo==="De gabinete"?`${(s.fotos||[]).length} fotos · guion ${s.guion?"✓":"pendiente"}`:`${(s.fotos||[]).length} fotos · ${(s.videos||[]).length} videos`,d:(s.fotos||[]).length>0||(s.tipo==="De gabinete"&&!!s.guion)},
+    {t:"Evaluación",s:g?`${g.txt} · ${g.pct}%`:"Pendiente",d:!!g},
+    {t:"Reporte Word",s:s.reporteFecha?`Generado ${fFecha(s.reporteFecha,false)}`:"Por generar",d:!!s.reporteFecha}
+  ];
+  app.innerHTML=`
+  <nav class="crumbs"><button id="cIni">Establecimientos</button><span>›</span><button id="cEst">${esc(e.nombreComercial||e.razonSocial)}</button><span>›</span><span>Simulacro ${esc(s.numero)}</span></nav>
+  <div class="head"><div><div class="eyebrow">${esc(s.tipo)} · Riesgo ${esc(e.riesgo)} · SCI ${esc(e.sci)}</div><h2>Simulacro No. ${esc(s.numero)}${s.hipotesis?": "+esc(s.hipotesis):""}</h2><p class="sub">${fFecha(s.fechaHora)}</p></div>
+  <button class="btn danger sm" id="delS">Eliminar simulacro</button></div>
+  <div class="steps">${pasos.map((p,i)=>`<button class="step ${paso===i+1?"on":""} ${p.d?"done":""}" data-p="${i+1}"><span class="n">Paso ${i+1}${p.d?" ✓":""}</span><span class="t">${p.t}</span><span class="s">${esc(p.s)}</span></button>`).join("")}</div>
+  <section id="paso"></section>`;
+  $("#cIni").onclick=()=>ir({v:"inicio"});
+  $("#cEst").onclick=()=>ir({v:"est",id:e.id});
+  $("#delS").onclick=()=>confirmar("Eliminar simulacro",`Se eliminará el simulacro No. ${s.numero} con sus fotos y su evaluación.`,async()=>{await borrarFotos(s);await borrar("simulacros",s.id);toast("Simulacro eliminado");ir({v:"est",id:e.id})});
+  app.querySelectorAll(".step").forEach(b=>b.onclick=()=>{V.paso=+b.dataset.p;lsSet("vime_sim_view",V);render()});
+  const cont=$("#paso");
+  [pasoDatos,pasoEvidencias,pasoEvaluacion,pasoReporte][paso-1](cont,s,e);
+}
+
+/* ---------- Paso 1: checklist ---------- */
+function pasoDatos(c,s,e){
+  const m=s.medidos||{};
+  c.innerHTML=`<form class="card form" id="fSim">
+    <h3 style="color:var(--navy);font-size:1.3rem">Checklist de datos del simulacro</h3>
+    <div class="grid g3">
+      <div class="field"><label for="num">Número de simulacro</label><input type="text" id="num" value="${esc(s.numero)}"></div>
+      <div class="field"><label for="fh">Fecha y hora</label><input type="datetime-local" id="fh" value="${esc(s.fechaHora)}"></div>
+    </div>
+    <fieldset class="field"><legend class="lbl">Tipo de simulacro</legend>${seg("tipo",["De campo","De gabinete"],s.tipo)}</fieldset>
+    <div class="field"><label for="hip">Hipótesis</label><input type="text" id="hip" placeholder="Ejemplo: sismo de magnitud 7.2 con lesionado en almacén" value="${esc(s.hipotesis)}">
+      <div class="chips">${HIPOTESIS.map(h=>`<button type="button" class="chip" data-h="${esc(h)}">${esc(h)}</button>`).join("")}</div></div>
+    <fieldset class="field"><legend class="lbl">¿El alertamiento es por alerta sísmica?</legend>${seg("alerta",["Sí","No"],s.alertaSismica?"Sí":"No")}<span class="hint">Con alerta sísmica el tiempo máximo de evacuación es de 50 segundos; en los demás casos, menos de 3 minutos.</span></fieldset>
+    <fieldset class="field"><legend class="lbl">Tipo de evacuación</legend>${seg("evac",["Total","Parcial"],s.evacuacion)}</fieldset>
+    <fieldset class="field"><legend class="lbl">Programación</legend>${seg("prog",["Con previo aviso","Sin previo aviso"],s.programacion||"Con previo aviso")}</fieldset>
+    <div class="field"><label for="guion">Guion y cronología</label><span class="hint">Pegue aquí el guion y la cronología diseñados para el simulacro (minuto a minuto). En simulacros de gabinete es la base principal de la evaluación.</span><textarea class="guion" id="guion" placeholder="11:00 Se escucha la alerta sísmica. El Coordinador General asume el mando…">${esc(s.guion)}</textarea></div>
+    <details ${m.tiempoEvac||m.evacuados?"open":""}><summary class="lbl" style="cursor:pointer">Datos medidos durante el simulacro (opcional, mejora la precisión)</summary>
+      <div class="grid g3" style="margin-top:12px">
+        <div class="field"><label for="tEv">Tiempo de evacuación (mm:ss)</label><input type="text" id="tEv" inputmode="numeric" placeholder="02:35" value="${esc(m.tiempoEvac)}"></div>
+        <div class="field"><label for="pob">Población en el inmueble</label><input type="number" id="pob" min="0" value="${esc(m.poblacion)}"></div>
+        <div class="field"><label for="evc">Personas evacuadas (conteo)</label><input type="number" id="evc" min="0" value="${esc(m.evacuados)}"></div>
+        <div class="field"><label for="bri">Brigadistas participantes</label><input type="number" id="bri" min="0" value="${esc(m.brigadistas)}"></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label for="notasEv">Notas del evaluador en sitio</label><textarea id="notasEv" placeholder="Lo observado directamente que no aparece en fotos o videos">${esc(m.notas)}</textarea></div>
+    </details>
+    <div class="row"><button class="btn" type="submit">Guardar y continuar a evidencias</button><span class="note" id="evacInfo"></span></div>
+  </form>`;
+  const f=$("#fSim");
+  f.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{$("#hip").value=b.dataset.h;if(/sismo/i.test(b.dataset.h))f.querySelector('input[name=alerta][value="Sí"]').checked=true});
+  const info=()=>{const t=parseMMSS($("#tEv").value);const lim=leerSeg(f,"alerta")==="Sí"?50:180;$("#evacInfo").textContent=t==null?"":(t<=lim?`Tiempo dentro del límite (${fmtSeg(lim)}).`:`Tiempo excede el límite de ${fmtSeg(lim)}.`)};
+  $("#tEv").oninput=info;f.querySelectorAll("input[name=alerta]").forEach(r=>r.onchange=info);info();
+  f.onsubmit=async ev=>{ev.preventDefault();
+    const o={...s,numero:$("#num").value.trim(),fechaHora:$("#fh").value,tipo:leerSeg(f,"tipo"),hipotesis:$("#hip").value.trim(),alertaSismica:leerSeg(f,"alerta")==="Sí",evacuacion:leerSeg(f,"evac"),programacion:leerSeg(f,"prog"),guion:$("#guion").value,
+      medidos:{tiempoEvac:$("#tEv").value.trim(),poblacion:$("#pob").value,evacuados:$("#evc").value,brigadistas:$("#bri").value,notas:$("#notasEv").value}};
+    delete o.id;
+    if(!o.fechaHora||!o.hipotesis){toast("Indique al menos la fecha y hora y la hipótesis");return}
+    await guardar("simulacros",s.id,o);toast("Datos del simulacro guardados");V.paso=2;lsSet("vime_sim_view",V);render();
+  };
+}
+
+/* ---------- Paso 2: evidencias ---------- */
+async function comprimir(file,max=1600,q=.82){
+  const bmp=await createImageBitmap(file);
+  const r=Math.min(1,max/Math.max(bmp.width,bmp.height));
+  const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*r);cv.height=Math.round(bmp.height*r);
+  cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
+  return await new Promise(res=>cv.toBlob(res,"image/jpeg",q));
+}
+async function agregarFotos(s,items){
+  // items: [{blob, nota, origen, fechaArchivo}]
+  trabajando=true;
+  const fotos=[...(s.fotos||[])];
+  try{
+    for(const it of items){
+      const id=uid();const f={id,nota:it.nota||"",origen:it.origen||"foto",fecha:it.fechaArchivo||""};
+      const up=await api("subirFoto",{simId:s.id,b64:await blobAB64(it.blob),mime:"image/jpeg",nombre:"foto_"+id+".jpg"});
+      f.fileId=up.fileId;S.blobs.set(f.fileId,it.blob);S.urls.set(f.fileId,URL.createObjectURL(it.blob));IDB.put(f.fileId,it.blob);fotos.push(f);
+      const pr=$("#upProg");if(pr)pr.textContent=`Subidas ${fotos.length-(s.fotos||[]).length} de ${items.length}…`;
+    }
+  }catch(e){toast("No se pudo subir una foto: "+(e.mensaje||e.message||e))}
+  trabajando=false;
+  const o={...S.sim[s.id],fotos};delete o.id;
+  await guardar("simulacros",s.id,o);render();
+}
+function pasoEvidencias(c,s,e){
+  const gab=s.tipo==="De gabinete";
+  c.innerHTML=`
+  <div class="grid" style="gap:22px">
+  ${gab?`<div class="alert ${s.guion?"ok":"warn"}">Simulacro de gabinete: la evaluación revisa si el guion y la cronología describen los 10 puntos, y verifica en las fotos o el video las actividades de gabinete (pase de lista, lectura del guion, debate y llenado de formatos). ${s.guion?"Guion capturado ("+s.guion.length.toLocaleString("es-MX")+" caracteres).":"Aún no hay guion capturado: agréguelo en el Paso 1."}</div>`:""}
+  <div class="card grid" style="gap:16px">
+    <h3 style="color:var(--navy);font-size:1.25rem">Fotografías del simulacro</h3>
+    <div class="drop" id="drop"><strong>Arrastre aquí las fotos o selecciónelas</strong><span class="note">JPG, PNG o WebP. Se optimizan automáticamente. Use la nota de cada foto para indicar qué muestra (ej. «punto de reunión norte»).</span>
+      <label class="btn" for="fileFotos">Seleccionar fotos</label><input type="file" id="fileFotos" accept="image/*" multiple hidden></div>
+    <div class="progress" id="upProg"></div>
+    ${(s.fotos||[]).length?`<div class="thumbs">${s.fotos.map((f,i)=>`<div class="thumb"><div class="img"><img src="${esc(fotoURL(f))}" data-fid="${esc(f.fileId)}" alt="Evidencia ${i+1}"><span class="no">${i+1}</span>${f.origen==="video"?'<span class="src">cuadro de video</span>':""}</div><div class="body"><input type="text" data-nota="${f.id}" aria-label="Nota de la foto ${i+1}" placeholder="¿Qué muestra?" value="${esc(f.nota)}"><button class="x" data-del="${f.id}">Quitar</button></div></div>`).join("")}</div>`:'<p class="note">Sin fotografías todavía.</p>'}
+  </div>
+  <div class="card grid" style="gap:16px">
+    <h3 style="color:var(--navy);font-size:1.25rem">Videos</h3>
+    <p class="note">Pegue el enlace de Google Drive de cada video. Gemini lo revisa directamente si el archivo es suyo o está compartido con su cuenta de Google y pesa hasta 45 MB. Para videos más pesados use «Extraer cuadros»: la app toma fotogramas y los agrega como fotos.</p>
+    <div class="grid g2" style="align-items:end">
+      <div class="field"><label for="vUrl">Enlace del video (Drive)</label><input type="url" id="vUrl" placeholder="https://drive.google.com/file/d/…"></div>
+      <div class="field"><label for="vDesc">Descripción</label><input type="text" id="vDesc" placeholder="Ej. Evacuación planta alta, cámara 1"></div>
+    </div>
+    <div><button class="btn alt sm" id="addV">Agregar enlace</button></div>
+    ${(s.videos||[]).length?`<div class="vlist">${s.videos.map((v,i)=>`<div class="vitem"><strong>V${i+1}</strong><a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.desc||v.url)}</a><label style="font-size:.95rem"><input type="checkbox" data-van="${i}" ${v.analizar!==false?"checked":""}> Analizar con IA</label><button class="x btn danger sm" data-dv="${i}">Quitar</button></div>`).join("")}</div>`:""}
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <h4 style="font-size:1.1rem">Extraer cuadros de un video para el análisis</h4>
+    <div class="row"><label class="btn" for="fileVid">Seleccionar archivo de video</label><input type="file" id="fileVid" accept="video/*" hidden>
+      <div class="field" style="width:220px"><label for="nCuadros">Cuadros a extraer</label><select id="nCuadros">${[8,12,16,24].map(n=>`<option ${n===12?"selected":""}>${n}</option>`).join("")}</select></div></div>
+    <div id="vidZone"></div>
+  </div>
+  <div class="row"><button class="btn" id="aEval">Continuar a la evaluación</button></div>
+  </div>`;
+  const inp=$("#fileFotos"),drop=$("#drop"),prog=$("#upProg");
+  const subir=async files=>{
+    const arr=[...files].filter(f=>/^image\//.test(f.type));if(!arr.length)return;
+    const items=[];
+    for(let i=0;i<arr.length;i++){prog.textContent=`Optimizando foto ${i+1} de ${arr.length}…`;try{items.push({blob:await comprimir(arr[i]),nota:"",origen:"foto",fechaArchivo:new Date(arr[i].lastModified).toISOString()})}catch(e){toast("No se pudo leer "+arr[i].name)}}
+    prog.textContent=`Subiendo ${items.length} foto(s)…`;await agregarFotos(S.sim[s.id],items);toast(`${items.length} foto(s) agregadas`);
+  };
+  inp.onchange=()=>subir(inp.files);
+  drop.ondragover=ev=>{ev.preventDefault();drop.classList.add("over")};drop.ondragleave=()=>drop.classList.remove("over");
+  drop.ondrop=ev=>{ev.preventDefault();drop.classList.remove("over");subir(ev.dataTransfer.files)};
+  c.querySelectorAll("[data-nota]").forEach(i=>i.onchange=async()=>{const cur=S.sim[s.id];const fotos=cur.fotos.map(f=>f.id===i.dataset.nota?{...f,nota:i.value}:f);const o={...cur,fotos};delete o.id;await guardar("simulacros",s.id,o)});
+  c.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const f=cur.fotos.find(x=>x.id===b.dataset.del);if(f?.fileId)try{await api("borrarFoto",{fileId:f.fileId})}catch(e){}const o={...cur,fotos:cur.fotos.filter(x=>x.id!==b.dataset.del)};delete o.id;await guardar("simulacros",s.id,o);render()});
+  $("#addV").onclick=async()=>{const u=$("#vUrl").value.trim();if(!/^https?:\/\//.test(u)){toast("Pegue un enlace que inicie con https://");return}const cur=S.sim[s.id];const o={...cur,videos:[...(cur.videos||[]),{url:u,desc:$("#vDesc").value.trim()}]};delete o.id;await guardar("simulacros",s.id,o);render()};
+  c.querySelectorAll("[data-dv]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const o={...cur,videos:cur.videos.filter((_,i)=>i!==+b.dataset.dv)};delete o.id;await guardar("simulacros",s.id,o);render()});
+  c.querySelectorAll("[data-van]").forEach(k=>k.onchange=async()=>{const cur=S.sim[s.id];const o={...cur,videos:cur.videos.map((v,i)=>i===+k.dataset.van?{...v,analizar:k.checked}:v)};await guardar("simulacros",s.id,o)});
+  $("#fileVid").onchange=()=>{const f=$("#fileVid").files[0];if(f)extraerCuadros(f,+$("#nCuadros").value,s)};
+  $("#aEval").onclick=()=>{V.paso=3;lsSet("vime_sim_view",V);render()};
+}
+async function extraerCuadros(file,n,s){
+  const z=$("#vidZone");trabajando=true;
+  z.innerHTML='<p class="progress">Leyendo el video…</p>';
+  const url=URL.createObjectURL(file);const v=document.createElement("video");v.muted=true;v.playsInline=true;v.preload="auto";v.src=url;
+  try{
+    await new Promise((res,rej)=>{v.onloadedmetadata=res;v.onerror=()=>rej(new Error("formato no compatible"))});
+    const dur=v.duration;if(!isFinite(dur)||dur<=0)throw new Error("duración desconocida");
+    const cv=document.createElement("canvas");const r=Math.min(1,1280/Math.max(v.videoWidth,v.videoHeight));cv.width=Math.round(v.videoWidth*r);cv.height=Math.round(v.videoHeight*r);
+    const ctx=cv.getContext("2d");const cuadros=[];
+    for(let i=0;i<n;i++){
+      const t=dur*(i+.5)/n;z.innerHTML=`<p class="progress">Extrayendo cuadro ${i+1} de ${n}…</p>`;
+      await new Promise(res=>{v.onseeked=res;v.currentTime=t});
+      ctx.drawImage(v,0,0,cv.width,cv.height);
+      const b=await new Promise(res=>cv.toBlob(res,"image/jpeg",.8));
+      cuadros.push({t,blob:b,url:URL.createObjectURL(b),sel:true});
+    }
+    const mmss=t=>`${String(Math.floor(t/60)).padStart(2,"0")}:${String(Math.floor(t%60)).padStart(2,"0")}`;
+    const pintar=()=>{z.innerHTML=`<p class="note">${esc(file.name)} · duración ${fmtSeg(dur)}. Toque un cuadro para incluirlo o excluirlo.</p>
+      <div class="frames">${cuadros.map((q,i)=>`<div class="frame ${q.sel?"sel":""}" data-i="${i}" role="checkbox" aria-checked="${q.sel}" tabindex="0"><img src="${q.url}" alt="Cuadro ${mmss(q.t)}"><span>${mmss(q.t)}</span></div>`).join("")}</div>
+      <div class="row" style="margin-top:12px"><button class="btn orange" id="addFr">Agregar ${cuadros.filter(q=>q.sel).length} cuadro(s) a las evidencias</button><button class="btn alt sm" id="canFr">Descartar</button></div>`;
+      z.querySelectorAll(".frame").forEach(fr=>{const tg=()=>{cuadros[+fr.dataset.i].sel=!cuadros[+fr.dataset.i].sel;pintar()};fr.onclick=tg;fr.onkeydown=ev=>{if(ev.key===" "||ev.key==="Enter"){ev.preventDefault();tg()}}});
+      $("#canFr").onclick=()=>{z.innerHTML="";trabajando=false};
+      $("#addFr").onclick=async()=>{const sel=cuadros.filter(q=>q.sel);if(!sel.length)return;$("#addFr").disabled=true;z.insertAdjacentHTML("beforeend",'<p class="progress">Subiendo cuadros…</p>');
+        await agregarFotos(S.sim[s.id],sel.map(q=>({blob:q.blob,nota:`Video «${file.name}» en ${mmss(q.t)}`,origen:"video"})));toast(`${sel.length} cuadro(s) agregados`)};
+    };
+    pintar();
+  }catch(e){z.innerHTML=`<div class="alert err">No se pudo procesar el video (${esc(e.message)}). Pruebe con un archivo MP4 (H.264).</div>`;trabajando=false}
+  finally{URL.revokeObjectURL(url)}
+}
+
+/* ---------- Paso 3: evaluación ---------- */
+function evaluacionVacia(s,e){
+  const sciNA=e.sci!=="Aplica";
+  return {
+    puntos:PUNTOS.map(p=>({n:p.n,cal:(p.n===5&&sciNA)?"No aplica":"",obs:(p.n===5&&sciNA)?"El establecimiento no tiene obligación de implementar el SCI.":"",rec:"",fotos:[],conf:""})),
+    actividades:s.tipo==="De gabinete"?ACT_GAB.map(a=>({n:a.n,cal:"",obs:""})):[],
+    resumen:"",recomendaciones:[],origen:"manual"
+  };
+}
+function contexto(s,e){
+  const m=s.medidos||{};const t=parseMMSS(m.tiempoEvac);
+  return `ESTABLECIMIENTO
+- Razón social: ${e.razonSocial}
+- Nombre comercial: ${e.nombreComercial||"—"}
+- Tipo de riesgo: ${e.riesgo}
+- Sistema de Comando de Incidentes: ${e.sci}
+
+SIMULACRO
+- Número: ${s.numero}
+- Fecha y hora: ${fFecha(s.fechaHora)}
+- Tipo: ${s.tipo}
+- Hipótesis: ${s.hipotesis}
+- Alertamiento por alerta sísmica: ${s.alertaSismica?"Sí (límite de evacuación 50 segundos)":"No (límite de evacuación menor a 3 minutos)"}
+- Tipo de evacuación: ${s.evacuacion}
+- Programación: ${s.programacion||"—"}
+${t!=null?`- Tiempo de evacuación medido: ${fmtSeg(t)} (${t<=limiteEvac(s)?"dentro":"fuera"} del límite)\n`:""}${m.poblacion?`- Población en el inmueble: ${m.poblacion}\n`:""}${m.evacuados?`- Personas evacuadas según conteo: ${m.evacuados}\n`:""}${m.brigadistas?`- Brigadistas participantes: ${m.brigadistas}\n`:""}${m.notas?`- Notas del evaluador en sitio: ${m.notas}\n`:""}${(s.videos||[]).filter(v=>v.analizar===false).length?`- Videos registrados que NO se te envían: ${s.videos.filter(v=>v.analizar===false).map(v=>v.desc||"video").join("; ")}\n`:""}
+GUION Y CRONOLOGÍA
+${(s.guion||"(no se capturó guion)").slice(0,60000)}`;
+}
+function criterios(s,e){
+  const sciNA=e.sci!=="Aplica";
+  return PUNTOS.map(p=>`${p.n}. ${p.t}: ${p.c}${p.n===5&&sciNA?" → El SCI NO APLICA a este establecimiento: califica \"No aplica\".":""}${p.n===4&&sciNA?" (Sin SCI, no exijas PC/ACV/AE.)":""}`).join("\n");
+}
+const MARCO=`Eres evaluador experto en Protección Civil en México (Grupo VIME). Evalúas simulacros conforme a la Ley Estatal de Protección Civil de Morelos y su Reglamento, la NT-SGIRPC-SIM-007-2024 (CDMX), la NOM-002-STPS-2010 y la NOM-010-SSPC-2019 (SCI). Escribe en español de México, en tono profesional, concreto y verificable. Basa cada observación en lo que realmente se ve en las fotos y videos o en lo que dice el guion; no inventes hechos. Cita las fotos por su número (Foto 3) y los videos con su etiqueta y minuto (V1 min 02:15). En los videos puedes medir tiempos: por ejemplo, desde que suena la alarma hasta que la última persona llega al punto de reunión. Si un punto no tiene evidencia suficiente, dilo y califica "Malo" con confianza "baja", explicando que no hay evidencia.`;
+
+function listaEvidencias(fotos,videos,desde=1){
+  const l=[];
+  if(fotos.length) l.push("FOTOGRAFÍAS ADJUNTAS (en este orden)\n"+fotos.map((f,i)=>`Foto ${desde+i}: ${f.nota||"(sin nota)"}${f.origen==="video"?" [cuadro extraído de video]":""}`).join("\n"));
+  if(videos.length) l.push("VIDEOS ADJUNTOS\n"+videos.map(v=>`${v.etiqueta}: ${v.desc||"video del simulacro"}`).join("\n"));
+  return l.join("\n\n");
+}
+function promptCampo(s,e,evid,hallazgos){
+  return `${MARCO}
+
+TAREA: Evalúa un SIMULACRO DE CAMPO revisando las evidencias (fotos y videos) y el guion y cronología. Califica cada uno de los 10 puntos como "Bueno", "Regular" o "Malo" (o "No aplica" solo donde se indica).
+
+CRITERIOS DE LOS 10 PUNTOS
+${criterios(s,e)}
+
+Escala: Bueno = se cumple de forma completa y visible; Regular = se cumple parcialmente o con deficiencias; Malo = no se cumple o no hay evidencia.
+
+${contexto(s,e)}
+
+${hallazgos?"HALLAZGOS DE LOTES DE FOTOGRAFÍAS YA REVISADOS\n"+hallazgos+"\n\n":""}${evid}
+
+Responde SOLO con JSON con esta forma exacta:
+{"puntos":[{"n":1,"cal":"Bueno|Regular|Malo|No aplica","obs":"observaciones detectadas (2-5 oraciones)","rec":"recomendación de mejora concreta","fotos":[1,2],"videos":["V1 min 00:35"],"conf":"alta|media|baja"}, ... los 10 puntos ...],
+ "tiempoEvacuacion":"tiempo observado en video en formato mm:ss, o vacío si no se puede medir",
+ "resumen":"conclusión general del simulacro en 3-5 oraciones",
+ "recomendaciones":["recomendación general priorizada", "..."]}`;
+}
+function promptGabinete(s,e,evid,hallazgos){
+  return `${MARCO}
+
+TAREA: Evalúa un SIMULACRO DE GABINETE. Tiene dos partes:
+A) Revisa el GUION Y CRONOLOGÍA y determina si describe con exactitud cada uno de los 10 puntos (quién, qué, cuándo, con qué recursos y en qué tiempo). Califica cada punto: Bueno = descrito de forma completa y exacta; Regular = mencionado de forma incompleta o ambigua; Malo = no aparece.
+B) Con las fotos y videos, verifica que se realizaron las 4 actividades del simulacro de gabinete: ${ACT_GAB.map(a=>a.n+". "+a.t).join("; ")}. Califica cada una como Bueno, Regular o Malo.
+
+CRITERIOS DE LOS 10 PUNTOS (lo que el guion debe describir)
+${criterios(s,e)}
+
+${contexto(s,e)}
+
+${hallazgos?"HALLAZGOS DE LOTES DE FOTOGRAFÍAS YA REVISADOS\n"+hallazgos+"\n\n":""}${evid||(hallazgos?"":"No hay fotos ni videos: califica la parte B con evidencia insuficiente.")}
+
+Responde SOLO con JSON con esta forma exacta:
+{"puntos":[{"n":1,"cal":"Bueno|Regular|Malo|No aplica","obs":"qué dice o le falta al guion sobre este punto","rec":"qué agregar o corregir en el guion","fotos":[],"videos":[],"conf":"alta|media|baja"}, ... los 10 puntos ...],
+ "actividades":[{"n":1,"cal":"Bueno|Regular|Malo","obs":"lo observado en fotos o videos"}, ... las 4 actividades ...],
+ "resumen":"conclusión general en 3-5 oraciones",
+ "recomendaciones":["recomendación general priorizada","..."]}`;
+}
+function promptLote(s,e,evid,desde){
+  const gab=s.tipo==="De gabinete";
+  return `${MARCO}
+
+Revisa estas fotografías de un simulacro ${gab?"de gabinete":"de campo"} (hipótesis: ${s.hipotesis}; SCI ${e.sci}). Las fotos están numeradas desde la ${desde}.
+${evid}
+
+Describe solo lo que se ve y que sirva como evidencia para ${gab?"las actividades de gabinete: "+ACT_GAB.map(a=>a.n+". "+a.t).join("; "):"estos 10 puntos:\n"+PUNTOS.map(p=>p.n+". "+p.t+": "+p.c).join("\n")}
+
+Responde SOLO con JSON: {"hallazgos":[{"foto":${desde},"ve":"descripción objetiva de lo que se ve"}]}`;
+}
+function parseJSON(t){
+  t=String(t||"").trim();
+  try{return JSON.parse(t)}catch(e){}
+  const m=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(m){try{return JSON.parse(m[1])}catch(e){}}
+  const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}
+  throw {error:"json",mensaje:"La respuesta de Gemini no tuvo el formato esperado. Intente de nuevo."};
+}
+const LOTE_FOTOS=60;
+async function analizar(s,e,out,btn){
+  if(!S.ia){out.innerHTML='<div class="alert err">Falta configurar la clave de Gemini (GEMINI_API_KEY) en el servidor de Apps Script. Vea la guía de instalación.</div>';return}
+  const gab=s.tipo==="De gabinete";
+  const fotos=(s.fotos||[]).filter(f=>f.fileId);
+  const vids=(s.videos||[]).map((v,i)=>({...v,etiqueta:"V"+(i+1),idx:i})).filter(v=>v.analizar!==false);
+  if(!gab&&!fotos.length&&!vids.length){out.innerHTML='<div class="alert warn">Agregue fotografías o enlaces de video en el Paso 2 antes de analizar.</div>';return}
+  if(gab&&!s.guion){out.innerHTML='<div class="alert warn">Capture el guion y la cronología en el Paso 1: es la base de la evaluación de gabinete.</div>';return}
+  trabajando=true;btn.disabled=true;
+  const P=t=>out.innerHTML=`<p class="progress">${esc(t)}</p>`;
+  try{
+    // 1) Videos de Drive → Gemini (se reutilizan durante 48 h)
+    const listos=[];
+    for(const v of vids){
+      let g=v.gem;
+      if(!g||!g.expira||new Date(g.expira)-Date.now()<3600e3){
+        P(`Enviando el video ${v.etiqueta} desde su Drive a Gemini… (puede tardar un par de minutos)`);
+        try{ g=await api("subirVideo",{url:v.url}) }
+        catch(err){ if(err.error==="video"){ toast(`${v.etiqueta}: ${err.mensaje}`); continue } throw err }
+        const cur=S.sim[s.id];const videos=cur.videos.map((x,i)=>i===v.idx?{...x,gem:{uri:g.uri,mime:g.mime,expira:g.expira}}:x);
+        await guardar("simulacros",s.id,{...cur,videos});
+      }
+      listos.push({etiqueta:v.etiqueta,desc:v.desc,uri:g.uri,mime:g.mime});
+    }
+    if(!gab&&!fotos.length&&!listos.length) throw {mensaje:"Ningún video se pudo enviar a Gemini y no hay fotos. Revise los avisos de los videos o agregue fotos."};
+    const build=gab?promptGabinete:promptCampo;
+    let r;
+    if(fotos.length<=LOTE_FOTOS){
+      P(`Gemini está revisando ${fotos.length} foto(s)${listos.length?` y ${listos.length} video(s)`:""} con el guion… suele tardar de 1 a 3 minutos.`);
+      r=await api("ia",{prompt:build(s,e,listaEvidencias(fotos,listos),null),fotos:fotos.map(f=>f.fileId),videos:listos});
+    } else {
+      const hall=[];
+      for(let a=0;a<fotos.length;a+=LOTE_FOTOS){
+        const b=Math.min(fotos.length,a+LOTE_FOTOS);
+        P(`Revisando fotos ${a+1} a ${b} de ${fotos.length}…`);
+        const rl=await api("ia",{prompt:promptLote(s,e,listaEvidencias(fotos.slice(a,b),[],a+1),a+1),fotos:fotos.slice(a,b).map(f=>f.fileId),desde:a});
+        (parseJSON(rl.texto).hallazgos||[]).forEach(h=>hall.push(`Foto ${h.foto}: ${h.ve}`));
+      }
+      P("Integrando la evaluación de los 10 puntos…");
+      r=await api("ia",{prompt:build(s,e,listaEvidencias([],listos),hall.join("\n")),videos:listos});
+    }
+    const ev=normalizar(parseJSON(r.texto),s,e);ev.modelo=r.modelo||"";
+    trabajando=false;
+    await guardar("simulacros",s.id,{...S.sim[s.id],evaluacion:ev});
+    toast("Evaluación generada. Revísela y ajústela si lo considera necesario.");render();
+  }catch(err){
+    trabajando=false;btn.disabled=false;
+    out.innerHTML=`<div class="alert err">${esc(err?.mensaje||err?.message||String(err))}</div>`;
+    pendienteRender=false;
+  }
+}
+function normalizar(r,s,e){
+  const base=evaluacionVacia(s,e);
+  const okCal=c=>["Bueno","Regular","Malo","No aplica"].includes(c)?c:"";
+  base.puntos=base.puntos.map(p=>{const x=(r?.puntos||[]).find(q=>+q.n===p.n)||{};
+    const cal=(p.n===5&&e.sci!=="Aplica")?"No aplica":okCal(x.cal);
+    return {n:p.n,cal,obs:(p.n===5&&e.sci!=="Aplica"&&!x.obs)?p.obs:String(x.obs||""),rec:String(x.rec||""),fotos:Array.isArray(x.fotos)?x.fotos.map(Number).filter(n=>n>0):[],videos:Array.isArray(x.videos)?x.videos.map(String):[],conf:String(x.conf||"")}});
+  if(s.tipo==="De gabinete") base.actividades=base.actividades.map(a=>{const x=(r?.actividades||[]).find(q=>+q.n===a.n)||{};return {n:a.n,cal:okCal(x.cal),obs:String(x.obs||"")}});
+  base.resumen=String(r?.resumen||"");base.recomendaciones=(Array.isArray(r?.recomendaciones)?r.recomendaciones:[]).map(String);
+  base.tiempoVideo=String(r?.tiempoEvacuacion||"");base.origen="ia";base.fechaIA=new Date().toISOString();
+  return base;
+}
+function rateHTML(name,val,conNA){
+  const ops=[["Bueno","rb"],["Regular","rr"],["Malo","rm"]];if(conNA)ops.push(["No aplica","rn"]);
+  return `<div class="rate" role="radiogroup">${ops.map(([o,c],i)=>`<input type="radio" id="${name}_${i}" name="${name}" value="${o}" ${val===o?"checked":""}><label class="${c}" for="${name}_${i}">${o}</label>`).join("")}</div>`;
+}
+function evidTxt(fs,vs){const l=[...(fs||[]).map(n=>"Foto "+n),...(vs||[])];return l.length?"Evidencia: "+l.join(", "):""}
+const calCls=c=>c==="No aplica"?"NA":(c||"Pendiente");
+function resumenHTML(ev,s){
+  const ps=ev.puntos;const cnt={Bueno:0,Regular:0,Malo:0,"No aplica":0,"":0};ps.forEach(p=>cnt[p.cal||""]++);
+  const g=califGlobal(ev);const tot=ps.length;
+  return `<div class="card score">
+    <div class="big"><span class="eyebrow">Calificación general</span><span class="v">${g?g.pct+"%":"—"}</span>${g?`<span class="cal ${g.txt}" style="align-self:flex-start">${g.txt}</span>`:'<span class="note">Califique los puntos</span>'}</div>
+    <div style="flex:2 1 320px;display:flex;flex-direction:column;gap:12px;justify-content:center">
+      <div class="bar" aria-hidden="true"><i style="width:${cnt.Bueno/tot*100}%;background:var(--good)"></i><i style="width:${cnt.Regular/tot*100}%;background:var(--reg)"></i><i style="width:${cnt.Malo/tot*100}%;background:var(--bad)"></i><i style="width:${cnt["No aplica"]/tot*100}%;background:var(--na)"></i></div>
+      <div class="counts"><span class="cal Bueno">Bueno: ${cnt.Bueno}</span><span class="cal Regular">Regular: ${cnt.Regular}</span><span class="cal Malo">Malo: ${cnt.Malo}</span>${cnt["No aplica"]?`<span class="cal NA">No aplica: ${cnt["No aplica"]}</span>`:""}${cnt[""]?`<span class="cal Pendiente">Sin calificar: ${cnt[""]}</span>`:""}</div>
+      <p class="note">Escala: Bueno = 2, Regular = 1, Malo = 0 sobre los puntos que aplican. General: Bueno ≥ 85 %, Regular ≥ 60 %, Malo &lt; 60 %.${s.tipo==="De gabinete"?" En gabinete, los 10 puntos califican el guion y la cronología.":""}</p>
+    </div></div>`;
+}
+function pasoEvaluacion(c,s,e){
+  const gab=s.tipo==="De gabinete";
+  const ev=s.evaluacion;
+  const m=s.medidos||{};const t=parseMMSS(m.tiempoEvac);
+  c.innerHTML=`<div class="grid" style="gap:20px">
+  <div class="ai">
+    <h3>Análisis con inteligencia artificial (Gemini)</h3>
+    <p class="note">${gab?`Se revisará si el guion y la cronología describen los 10 puntos, y se verificarán en ${(s.fotos||[]).length} foto(s) las 4 actividades de gabinete.`:`Se revisarán ${(s.fotos||[]).length} fotografía(s) y ${(s.videos||[]).filter(v=>v.analizar!==false).length} video(s) de Drive junto con el guion, la hipótesis y los datos medidos.`} El resultado es una propuesta: usted la revisa, ajusta y firma como evaluador.</p>
+    ${t!=null&&!gab?`<div class="timebox"><span class="cal ${t<=limiteEvac(s)?"Bueno":"Malo"}">Evacuación: ${fmtSeg(t)}</span><span class="note">Límite: ${fmtSeg(limiteEvac(s))}${esSismo(s)?" (alerta sísmica)":""}</span></div>`:""}
+    ${ev?.tiempoVideo&&!gab?`<p class="note">Tiempo de evacuación observado por Gemini en video: <strong>${esc(ev.tiempoVideo)}</strong> (límite ${fmtSeg(limiteEvac(s))}).</p>`:""}
+    <div class="row"><button class="btn orange" id="btnIA">${ev?.origen==="ia"?"Volver a analizar":"Analizar evidencias"}</button>${!ev?'<button class="btn alt" id="btnManual">Evaluar manualmente</button>':""}</div>
+    <div id="iaOut"></div>
+    ${ev?.origen==="ia"&&ev.fechaIA?`<p class="note">Último análisis: ${fFecha(ev.fechaIA)}${ev.modelo?" con "+esc(ev.modelo):""}. Volver a analizar reemplaza calificaciones y textos.</p>`:""}
+  </div>
+  ${ev?resumenHTML(ev,s)+formEval(ev,s,e):""}
+  </div>`;
+  $("#btnIA").onclick=()=>{
+    if(ev&&ev.puntos.some(p=>p.obs)){confirmar("Volver a analizar","Se reemplazarán las calificaciones, observaciones y recomendaciones actuales por un análisis nuevo.",()=>analizar(S.sim[s.id],e,$("#iaOut"),$("#btnIA")),"Analizar de nuevo")}
+    else analizar(S.sim[s.id],e,$("#iaOut"),$("#btnIA"));
+  };
+  if($("#btnManual"))$("#btnManual").onclick=async()=>{const o={...s,evaluacion:evaluacionVacia(s,e)};delete o.id;await guardar("simulacros",s.id,o);render()};
+  if(ev) bindEval(c,s,e);
+}
+function formEval(ev,s,e){
+  const gab=s.tipo==="De gabinete";const nF=(s.fotos||[]).length;
+  return `<form id="fEval" class="grid" style="gap:16px">
+  <h3 style="color:var(--navy);font-size:1.35rem">${gab?"Los 10 puntos en el guion y la cronología":"Evaluación de los 10 puntos"}</h3>
+  ${ev.puntos.map(p=>{const P=PUNTOS[p.n-1];const fs=(p.fotos||[]).filter(n=>n<=nF);return `<div class="punto ${calCls(p.cal)}" id="pt${p.n}">
+    <h4><span class="k">${p.n}.</span> ${esc(P.t)}</h4>
+    <p class="crit">${esc(P.c)}</p>
+    ${rateHTML("cal"+p.n,p.cal,p.n===5||p.n===4)}
+    <div class="field"><label for="obs${p.n}">Observaciones detectadas</label><textarea id="obs${p.n}" data-k="obs" data-n="${p.n}">${esc(p.obs)}</textarea></div>
+    <div class="field"><label for="rec${p.n}">Recomendación de mejora</label><textarea id="rec${p.n}" data-k="rec" data-n="${p.n}" style="min-height:90px">${esc(p.rec)}</textarea></div>
+    ${fs.length||p.conf||(p.videos||[]).length?`<p class="ev">${evidTxt(fs,p.videos)}${(fs.length||(p.videos||[]).length)&&p.conf?" · ":""}${p.conf?"Confianza del análisis: "+esc(p.conf):""}</p>`:""}
+  </div>`}).join("")}
+  ${gab?`<h3 style="color:var(--navy);font-size:1.35rem;margin-top:8px">Actividades del simulacro de gabinete</h3>
+  ${ev.actividades.map(a=>`<div class="punto ${calCls(a.cal)}"><h4><span class="k">${a.n}.</span> ${esc(ACT_GAB[a.n-1].t)}</h4>${rateHTML("act"+a.n,a.cal,false)}<div class="field"><label for="aobs${a.n}">Observaciones</label><textarea id="aobs${a.n}" data-k="aobs" data-n="${a.n}" style="min-height:90px">${esc(a.obs)}</textarea></div></div>`).join("")}`:""}
+  <div class="card form">
+    <div class="field"><label for="resumen">Conclusión general</label><textarea id="resumen">${esc(ev.resumen)}</textarea></div>
+    <div class="field"><label for="recs">Recomendaciones generales de mejora</label><span class="hint">Una por renglón, en orden de prioridad.</span><textarea id="recs">${esc((ev.recomendaciones||[]).join("\n"))}</textarea></div>
+  </div>
+  <div class="row"><button class="btn" type="submit">Guardar evaluación</button><button class="btn alt" type="button" id="aRep">Continuar al reporte</button><span class="note" id="guardEst"></span></div>
+  </form>`;
+}
+function leerEval(f,s){
+  const ev=JSON.parse(JSON.stringify(S.sim[s.id].evaluacion));
+  ev.puntos.forEach(p=>{p.cal=leerSeg(f,"cal"+p.n)||p.cal;p.obs=$("#obs"+p.n,f).value;p.rec=$("#rec"+p.n,f).value});
+  (ev.actividades||[]).forEach(a=>{a.cal=leerSeg(f,"act"+a.n)||a.cal;a.obs=$("#aobs"+a.n,f).value});
+  ev.resumen=$("#resumen",f).value;ev.recomendaciones=$("#recs",f).value.split("\n").map(x=>x.trim()).filter(Boolean);
+  return ev;
+}
+function bindEval(c,s,e){
+  const f=$("#fEval",c);
+  const save=async(msg)=>{const ev=leerEval(f,s);const o={...S.sim[s.id],evaluacion:ev};delete o.id;await guardar("simulacros",s.id,o);if(msg)toast(msg);$("#guardEst").textContent="Guardado "+new Date().toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})};
+  f.querySelectorAll(".rate input").forEach(r=>r.onchange=async()=>{await save();const card=r.closest(".punto");card.className="punto "+calCls(r.value);const scoreEl=c.querySelector(".score");if(scoreEl)scoreEl.outerHTML=resumenHTML(S.sim[s.id].evaluacion,s)});
+  f.querySelectorAll("textarea").forEach(t=>t.onchange=()=>save());
+  f.onsubmit=async ev=>{ev.preventDefault();await save("Evaluación guardada")};
+  $("#aRep",c).onclick=async()=>{await save();V.paso=4;lsSet("vime_sim_view",V);render()};
+}
+
+/* ---------- Paso 4: reporte ---------- */
+function pasoReporte(c,s,e){
+  const ev=s.evaluacion;
+  if(!ev){c.innerHTML='<div class="empty"><strong>Primero realice la evaluación</strong><p>El reporte se genera a partir de las calificaciones y observaciones del Paso 3.</p></div>';return}
+  const falt=ev.puntos.filter(p=>!p.cal).length+(ev.actividades||[]).filter(a=>!a.cal).length;
+  c.innerHTML=`<div class="grid g2" style="align-items:start">
+  <form class="card form" id="fRep">
+    <h3 style="color:var(--navy);font-size:1.3rem">Datos del reporte</h3>
+    <div class="field"><label for="evNom">Nombre de la persona que evalúa</label><input type="text" id="evNom" value="${esc(s.evaluador||lsGet("vime_sim_evaluador",""))}"></div>
+    <div class="field"><label for="evCargo">Cargo o registro (opcional)</label><input type="text" id="evCargo" placeholder="Ej. Consultor externo en Protección Civil" value="${esc(s.evaluadorCargo||lsGet("vime_sim_cargo",""))}"></div>
+    <div class="field"><label for="evFecha">Fecha de evaluación</label><input type="date" id="evFecha" value="${esc(s.fechaEvaluacion||hoyISO())}"></div>
+    <fieldset class="field"><legend class="lbl">Contenido adicional</legend>
+      <label><input type="checkbox" id="incFotos" ${s.incFotos!==false?"checked":""}> Anexo de evidencia fotográfica (${(s.fotos||[]).length} fotos)</label>
+      <label><input type="checkbox" id="incGuion" ${s.incGuion?"checked":""}> Anexo con el guion y cronología</label>
+    </fieldset>
+    ${falt?`<div class="alert warn">Hay ${falt} punto(s) sin calificar. Puede generar el reporte, pero aparecerán como «Sin calificar».</div>`:""}
+    <div class="row"><button class="btn orange" type="submit" id="genW">Generar reporte en Word</button></div>
+    <div id="repOut" class="progress"></div>
+  </form>
+  <div class="card grid" style="gap:12px">
+    <h3 style="color:var(--navy);font-size:1.2rem">Contenido del reporte</h3>
+    <ol style="margin:0;padding-left:1.3em;display:grid;gap:4px">
+      <li>Datos del establecimiento y del simulacro</li>
+      <li>Calificación general y resumen de resultados</li>
+      <li>Los 10 puntos evaluados: calificación (Bueno, Regular, Malo) y observaciones</li>
+      ${s.tipo==="De gabinete"?"<li>Actividades del simulacro de gabinete</li>":""}
+      <li>Recomendaciones de mejora por punto y generales</li>
+      <li>Videos de referencia (enlaces)</li>
+      <li>Nombre de quien evalúa, fecha de evaluación y firma</li>
+      <li>Anexos: evidencia fotográfica y guion (opcionales)</li>
+    </ol>
+    ${resumenHTML(ev,s)}
+  </div></div>`;
+  $("#fRep").onsubmit=async ev2=>{ev2.preventDefault();
+    const nom=$("#evNom").value.trim();if(!nom){toast("Escriba el nombre de quien evalúa");return}
+    lsSet("vime_sim_evaluador",nom);lsSet("vime_sim_cargo",$("#evCargo").value.trim());
+    const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incFotos:$("#incFotos").checked,incGuion:$("#incGuion").checked};delete o.id;
+    const out=$("#repOut");const b=$("#genW");b.disabled=true;trabajando=true;
+    try{
+      out.textContent="Armando el documento…";
+      const blob=await generarDocx({...o,id:s.id},e,t=>out.textContent=t);
+      const nombre=`Evaluacion_Simulacro_${(e.nombreComercial||e.razonSocial).replace(/[^\wÁÉÍÓÚÑáéíóúñ]+/g,"_").slice(0,40)}_No${String(o.numero).replace(/\W+/g,"")}_${o.fechaEvaluacion||hoyISO()}.docx`;
+        const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+      o.reporteFecha=new Date().toISOString();
+      trabajando=false;await guardar("simulacros",s.id,o);
+      out.textContent="";toast("Reporte guardado: "+nombre);render();
+    }catch(err){trabajando=false;out.innerHTML=`<div class="alert ${err?.code==="declined"?"warn":"err"}">${esc(err?.code==="declined"?"Descarga cancelada.":"No se generó el reporte: "+(err?.mensaje||err?.message||err))}</div>`;b.disabled=false}
+  };
+}
+
+/* ===================== Word (docx) ===================== */
+const COL={navy:"17325C",orange:"E2711D",gold:"F0A81C",gray:"5B6676",line:"C9D2DF",soft:"EEF2F8",
+  Bueno:["1D7A4C","E3F4EA"],Regular:["9A6206","FDF1D8"],Malo:["B42318","FBE5E2"],"No aplica":["5D6470","ECEEF1"],"":["5D6470","ECEEF1"]};
+async function bytesDe(url){const r=await fetch(url);if(!r.ok)throw new Error("no se pudo leer "+url);return new Uint8Array(await r.arrayBuffer())}
+async function dimsDe(blob){const b=await createImageBitmap(blob);return {w:b.width,h:b.height}}
+async function generarDocx(s,e,prog){
+  const D=window.docx;if(!D)throw new Error("No se cargó la librería de Word. Revise su conexión a internet.");
+  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,ImageRun,BorderStyle,ShadingType,Header,Footer,PageNumber,HeadingLevel,VerticalAlign,PageBreak,TableLayoutType}=D;
+  const F="Arial";
+  const ev=s.evaluacion;const g=califGlobal(ev);
+  const T=(text,o={})=>new TextRun({text:String(text??""),font:F,size:o.size||22,bold:o.bold,color:o.color,italics:o.it});
+  const P=(runs,o={})=>new Paragraph({children:Array.isArray(runs)?runs:[typeof runs==="string"?T(runs,o):runs],alignment:o.align,spacing:{after:o.after??120,before:o.before??0,line:300},keepNext:o.keepNext});
+  const multi=(txt,o={})=>String(txt||"—").split(/\n/).map(l=>P([T(l,o)],{after:60}));
+  const H=(txt)=>new Paragraph({children:[new TextRun({text:txt,font:F,size:28,bold:true,color:COL.navy})],spacing:{before:300,after:140},keepNext:true,border:{bottom:{style:BorderStyle.SINGLE,size:12,color:COL.orange,space:4}}});
+  const bord={top:{style:BorderStyle.SINGLE,size:4,color:COL.line},bottom:{style:BorderStyle.SINGLE,size:4,color:COL.line},left:{style:BorderStyle.SINGLE,size:4,color:COL.line},right:{style:BorderStyle.SINGLE,size:4,color:COL.line}};
+  const cell=(children,o={})=>new TableCell({children:Array.isArray(children)?children:[children],width:o.w?{size:o.w,type:WidthType.DXA}:undefined,shading:o.fill?{type:ShadingType.CLEAR,color:"auto",fill:o.fill}:undefined,margins:{top:80,bottom:80,left:110,right:110},verticalAlign:o.va||VerticalAlign.TOP,borders:bord,columnSpan:o.span});
+  const W=9638; // ancho útil carta con márgenes 2 cm aprox
+  const kvTable=(rows)=>new Table({width:{size:W,type:WidthType.DXA},columnWidths:[2900,W-2900],layout:TableLayoutType.FIXED,rows:rows.map(([k,v])=>new TableRow({children:[cell(P([T(k,{bold:true,color:COL.navy,size:21})],{after:0}),{w:2900,fill:COL.soft}),cell(String(v||"—").split("\n").map(l=>P([T(l,{size:21})],{after:0})),{w:W-2900})]}))});
+
+  prog("Cargando logotipos…");
+  const logoGV=await bytesDe("logo_gv.png");const logoAula=await bytesDe("logo_aula.png");
+  const header=new Header({children:[new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W/2,W/2],layout:TableLayoutType.FIXED,borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.SINGLE,size:12,color:COL.gold},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
+    rows:[new TableRow({children:[
+      new TableCell({borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},children:[new Paragraph({children:[new ImageRun({data:logoGV,transformation:{width:170,height:53}})]})]}),
+      new TableCell({borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},verticalAlign:VerticalAlign.CENTER,children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[new ImageRun({data:logoAula,transformation:{width:72,height:55}})]})]})
+    ]})]})]});
+  const footer=new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[T("Grupo VIME · Asesoría Corporativa Integral · www.aulavirtualgrupovime.com · Página ",{size:16,color:COL.gray}),new TextRun({children:[PageNumber.CURRENT],font:F,size:16,color:COL.gray}),T(" de ",{size:16,color:COL.gray}),new TextRun({children:[PageNumber.TOTAL_PAGES],font:F,size:16,color:COL.gray})]})]});
+
+  const body=[];
+  body.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:120,after:60},children:[new TextRun({text:"REPORTE DE EVALUACIÓN DE SIMULACRO",font:F,size:34,bold:true,color:COL.navy})]}));
+  body.push(P([T(`Simulacro ${s.tipo.toLowerCase()} No. ${s.numero} · ${s.hipotesis}`,{size:24,color:COL.orange,bold:true})],{align:AlignmentType.CENTER,after:240}));
+
+  body.push(H("1. Datos del establecimiento"));
+  body.push(kvTable([["Razón Social",e.razonSocial],["Nombre Comercial",e.nombreComercial],["Dirección",e.direccion],["NRPC",e.nrpc],["Tipo de riesgo",e.riesgo],["Sistema de Comando de Incidentes",e.sci]]));
+  body.push(H("2. Datos del simulacro"));
+  const m=s.medidos||{};const t=parseMMSS(m.tiempoEvac);
+  const filasSim=[["Número de simulacro",s.numero],["Fecha y hora",fFecha(s.fechaHora)],["Tipo de simulacro",s.tipo],["Hipótesis",s.hipotesis],["Alertamiento",s.alertaSismica?"Alerta sísmica (tiempo máximo de evacuación: 50 segundos)":"Alarma (tiempo de evacuación menor a 3 minutos)"],["Tipo de evacuación",s.evacuacion],["Programación",s.programacion]];
+  if(t!=null)filasSim.push(["Tiempo de evacuación medido",`${fmtSeg(t)} · ${t<=limiteEvac(s)?"dentro del límite":"excede el límite"} de ${fmtSeg(limiteEvac(s))}`]);
+  if(m.poblacion)filasSim.push(["Población en el inmueble",m.poblacion]);
+  if(m.evacuados)filasSim.push(["Personas evacuadas (conteo)",m.evacuados]);
+  if(m.brigadistas)filasSim.push(["Brigadistas participantes",m.brigadistas]);
+  filasSim.push(["Evidencias revisadas",`${(s.fotos||[]).length} fotografía(s)/cuadro(s) de video · ${(s.videos||[]).length} video(s) en Drive${s.guion?" · guion y cronología":""}`]);
+  body.push(kvTable(filasSim));
+
+  body.push(H("3. Resultado general"));
+  const cnt={Bueno:0,Regular:0,Malo:0,"No aplica":0,"":0};ev.puntos.forEach(p=>cnt[p.cal||""]++);
+  const gc=g?COL[g.txt]:COL[""];
+  body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[3200,W-3200],layout:TableLayoutType.FIXED,rows:[new TableRow({cantSplit:true,children:[
+    cell([P([T("CALIFICACIÓN GENERAL",{size:18,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:40}),P([T(g?`${g.txt}`:"Sin calificar",{size:40,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:20}),P([T(g?`${g.pct} %`:"",{size:26,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:0})],{w:3200,fill:gc[1],va:VerticalAlign.CENTER}),
+    cell([P([T(`Bueno: ${cnt.Bueno}   ·   Regular: ${cnt.Regular}   ·   Malo: ${cnt.Malo}${cnt["No aplica"]?"   ·   No aplica: "+cnt["No aplica"]:""}${cnt[""]?"   ·   Sin calificar: "+cnt[""]:""}`,{bold:true,size:22})],{after:100}),...multi(ev.resumen||"",{size:21}),P([T("Escala: Bueno = 2, Regular = 1, Malo = 0 sobre los puntos que aplican. General: Bueno ≥ 85 %, Regular ≥ 60 %, Malo < 60 %.",{size:16,color:COL.gray,it:true})],{after:0})],{w:W-3200})
+  ]})]}));
+
+  body.push(H(s.tipo==="De gabinete"?"4. Evaluación de los 10 puntos en el guion y la cronología":"4. Evaluación de los 10 puntos"));
+  const wN=620,wP=2400,wC=1500,wO=W-wN-wP-wC;
+  const hdr=(txt,w)=>cell(P([T(txt,{bold:true,color:"FFFFFF",size:20})],{after:0}),{w,fill:COL.navy,va:VerticalAlign.CENTER});
+  const calCell=(cal,w)=>{const cc=COL[cal||""];return cell(P([T(cal||"Sin calificar",{bold:true,color:cc[0],size:20})],{align:AlignmentType.CENTER,after:0}),{w,fill:cc[1],va:VerticalAlign.CENTER})};
+  body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[wN,wP,wC,wO],layout:TableLayoutType.FIXED,rows:[
+    new TableRow({tableHeader:true,children:[hdr("No.",wN),hdr("Punto evaluado",wP),hdr("Calificación",wC),hdr("Observaciones detectadas",wO)]}),
+    ...ev.puntos.map(p=>{const fs=(p.fotos||[]).filter(n=>n<=(s.fotos||[]).length);return new TableRow({cantSplit:true,children:[
+      cell(P([T(p.n,{bold:true,color:COL.orange})],{align:AlignmentType.CENTER,after:0}),{w:wN}),
+      cell(P([T(PUNTOS[p.n-1].t,{bold:true,size:20,color:COL.navy})],{after:0}),{w:wP}),
+      calCell(p.cal,wC),
+      cell([...multi(p.obs||"—",{size:20}),...(fs.length||(p.videos||[]).length?[P([T(evidTxt(fs,p.videos),{size:17,color:COL.gray,it:true})],{after:0})]:[])],{w:wO})
+    ]})})]}));
+
+  let sec=5;
+  if(s.tipo==="De gabinete"&&(ev.actividades||[]).length){
+    body.push(H(`${sec++}. Actividades del simulacro de gabinete`));
+    const w1=620,w2=3200,w3=1500,w4=W-w1-w2-w3;
+    body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[w1,w2,w3,w4],layout:TableLayoutType.FIXED,rows:[
+      new TableRow({tableHeader:true,children:[hdr("No.",w1),hdr("Actividad",w2),hdr("Calificación",w3),hdr("Observaciones",w4)]}),
+      ...ev.actividades.map(a=>new TableRow({children:[cell(P([T(a.n,{bold:true,color:COL.orange})],{align:AlignmentType.CENTER,after:0}),{w:w1}),cell(P([T(ACT_GAB[a.n-1].t,{bold:true,size:20,color:COL.navy})],{after:0}),{w:w2}),calCell(a.cal,w3),cell(multi(a.obs||"—",{size:20}),{w:w4})]}))]}));
+  }
+
+  body.push(H(`${sec++}. Recomendaciones de mejora`));
+  const recP=ev.puntos.filter(p=>p.rec&&p.rec.trim());
+  if(recP.length){
+    body.push(P([T("Por punto evaluado",{bold:true,color:COL.navy,size:23})],{after:80,keepNext:true}));
+    recP.forEach(p=>body.push(new Paragraph({spacing:{after:100,line:300},indent:{left:360,hanging:360},children:[T(`${p.n}. ${PUNTOS[p.n-1].t}: `,{bold:true,size:21}),T(p.rec,{size:21})]})));
+  }
+  if((ev.recomendaciones||[]).length){
+    body.push(P([T("Recomendaciones generales",{bold:true,color:COL.navy,size:23})],{before:160,after:80,keepNext:true}));
+    ev.recomendaciones.forEach((r,i)=>body.push(new Paragraph({spacing:{after:100,line:300},indent:{left:360,hanging:360},children:[T(`${i+1}.  `,{bold:true,color:COL.orange,size:21}),T(r,{size:21})]})));
+  }
+  if(!recP.length&&!(ev.recomendaciones||[]).length) body.push(P("Sin recomendaciones registradas."));
+
+  if((s.videos||[]).length){
+    body.push(H(`${sec++}. Videos de referencia`));
+    s.videos.forEach((v,i)=>body.push(new Paragraph({spacing:{after:80},children:[T(`V${i+1}. ${v.desc||"Video"}: `,{bold:true,size:21}),new D.ExternalHyperlink({link:v.url,children:[new TextRun({text:v.url,style:"Hyperlink",font:F,size:19})]})]})));
+  }
+
+  body.push(H(`${sec++}. Evaluación realizada por`));
+  body.push(kvTable([["Nombre de la persona que evalúa",s.evaluador],...(s.evaluadorCargo?[["Cargo o registro",s.evaluadorCargo]]:[]),["Fecha de evaluación",fFecha(s.fechaEvaluacion,false)]]));
+  body.push(P([T("")],{before:600,after:0}));
+  body.push(P([T("_________________________________________",{color:COL.gray})],{align:AlignmentType.CENTER,after:40}));
+  body.push(P([T(s.evaluador,{bold:true})],{align:AlignmentType.CENTER,after:0}));
+  body.push(P([T("Firma de la persona evaluadora",{size:18,color:COL.gray})],{align:AlignmentType.CENTER}));
+
+  if(s.incFotos!==false&&(s.fotos||[]).length){
+    body.push(new Paragraph({children:[new PageBreak()]}));
+    body.push(H("Anexo A. Evidencia fotográfica"));
+    const cw=W/2;const filas=[];
+    for(let i=0;i<s.fotos.length;i+=2){
+      const celdas=[];
+      for(let j=i;j<i+2;j++){
+        if(j<s.fotos.length){
+          prog(`Insertando foto ${j+1} de ${s.fotos.length}…`);
+          const f=s.fotos[j];let ch=[];
+          try{const b=await fotoBlob(f);const d=await dimsDe(b);const maxW=290,maxH=220;const r=Math.min(maxW/d.w,maxH/d.h);
+            ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[new ImageRun({data:new Uint8Array(await b.arrayBuffer()),transformation:{width:Math.round(d.w*r),height:Math.round(d.h*r)}})]}))}
+          catch(err){ch.push(P("(imagen no disponible)"))}
+          ch.push(P([T(`Foto ${j+1}. `,{bold:true,size:18,color:COL.navy}),T(f.nota||"",{size:18})],{align:AlignmentType.CENTER,after:0}));
+          celdas.push(new TableCell({children:ch,width:{size:cw,type:WidthType.DXA},margins:{top:100,bottom:100,left:100,right:100},borders:bord}));
+        } else celdas.push(new TableCell({children:[P("")],width:{size:cw,type:WidthType.DXA},borders:bord}));
+      }
+      filas.push(new TableRow({cantSplit:true,children:celdas}));
+    }
+    body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[cw,cw],layout:TableLayoutType.FIXED,rows:filas}));
+  }
+  if(s.incGuion&&s.guion){
+    body.push(new Paragraph({children:[new PageBreak()]}));
+    body.push(H(`Anexo ${s.incFotos!==false&&(s.fotos||[]).length?"B":"A"}. Guion y cronología del simulacro`));
+    s.guion.split("\n").forEach(l=>body.push(P([T(l,{size:20})],{after:40})));
+  }
+
+  prog("Compilando el archivo Word…");
+  const doc=new Document({creator:"Grupo VIME",title:"Reporte de Evaluación de Simulacro",
+    styles:{default:{document:{run:{font:F,size:22}}}},
+    sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1600,bottom:1100,left:1134,right:1134,header:500,footer:500}}},headers:{default:header},footers:{default:footer},children:body}]});
+  return await Packer.toBlob(doc);
+}
+
+iniciar();
+</script>
+</body>
+</html>
