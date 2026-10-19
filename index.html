@@ -942,8 +942,8 @@ function pasoReporte(c,s,e){
   <form class="card form" id="fRep">
     <h3 style="color:var(--navy);font-size:1.3rem">Datos del reporte</h3>
     <div class="field"><label for="evNom">Nombre del asesor que evalúa</label><input type="text" id="evNom" value="${esc(s.evaluador||lsGet("vime_sim_evaluador",""))}"></div>
-    <div class="field"><label for="evCargo">Cargo o registro (opcional)</label><input type="text" id="evCargo" placeholder="Ej. Consultor externo en Protección Civil" value="${esc(s.evaluadorCargo||lsGet("vime_sim_cargo",""))}"></div>
-    <div class="field"><label for="evFecha">Fecha de evaluación</label><input type="date" id="evFecha" value="${esc(s.fechaEvaluacion||hoyISO())}"></div>
+    <div class="field"><label for="evCargo">Cargo</label><input type="text" id="evCargo" placeholder="Ej. Asesor Externo" value="${esc(s.evaluadorCargo||lsGet("vime_sim_cargo",""))}"></div>
+    <div class="field"><label for="evFecha">Fecha de evaluación <span class="hint">(solo en la app)</span></label><input type="date" id="evFecha" value="${esc(s.fechaEvaluacion||hoyISO())}"></div>
     <div class="field"><span class="lbl">Logotipo del reporte</span>
       <div id="logoPrev" style="min-height:64px;display:flex;align-items:center;gap:12px;padding:10px;border:1.5px dashed var(--line);border-radius:10px;background:#fff">
         ${logoId?`<img data-fid="${esc(logoId)}" src="${esc(fotoURL({fileId:logoId}))}" alt="Logotipo del reporte" style="max-height:60px;max-width:240px">`:`<img src="logo_gv.png" alt="Grupo VIME" style="max-height:52px"><img src="logo_aula.png" alt="Aula Virtual" style="max-height:52px">`}
@@ -967,7 +967,7 @@ function pasoReporte(c,s,e){
       <li>Evaluación de protocolo${s.tipo==="De gabinete"?" y actividades de gabinete":""}</li>
       <li>Recomendaciones de mejora</li>
     </ol>
-    <p class="note">Al pie de cada página: nombre de quien evalúa, fecha de evaluación y número de página.</p>
+    <p class="note">Al pie de cada página solo aparece el nombre y el cargo del asesor (ej. «Nataly Mendez Villegas. Asesor Externo.»). La fecha de evaluación queda registrada en la app, no en el Word.</p>
     ${resumenHTML(ev,s)}
   </div></div>`;
   const guardarLogo=async id=>{logoId=id;lsSet("vime_sim_logo",id);const cur=S.sim[s.id];await guardar("simulacros",s.id,{...cur,logoFileId:id,evaluador:$("#evNom").value.trim(),evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value});render()};
@@ -1038,8 +1038,8 @@ async function generarDocx(s,e,prog){
     rows:[new TableRow({children:celdasEnc})]})]});
   const gp={size:16,color:COL.gray};
   const footer=new Footer({children:[
-    new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:20},border:{top:{style:BorderStyle.SINGLE,size:6,color:COL.line,space:4}},children:[T("Evaluó: ",{...gp,bold:true}),T(`${s.evaluador||""}${s.evaluadorCargo?", "+s.evaluadorCargo:""}`,gp),T("   ·   Fecha de evaluación: ",{...gp,bold:true}),T(fFecha(s.fechaEvaluacion,false),gp)]}),
-    new Paragraph({alignment:AlignmentType.CENTER,children:[T("Página ",gp),new TextRun({children:[PageNumber.CURRENT],font:F,size:16,color:COL.gray}),T(" de ",gp),new TextRun({children:[PageNumber.TOTAL_PAGES],font:F,size:16,color:COL.gray})]})
+    // Solo nombre y cargo del asesor (sin «Evaluó» ni fecha; esos datos quedan en la app)
+    new Paragraph({alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:6,color:COL.line,space:4}},children:[T([s.evaluador,s.evaluadorCargo].map(x=>String(x||"").trim().replace(/\.+$/,"")).filter(Boolean).join(". ")+".",{size:18,color:COL.gray})]})
   ]});
 
   const body=[];
