@@ -967,7 +967,7 @@ function pasoReporte(c,s,e){
       <li>Evaluación de protocolo${s.tipo==="De gabinete"?" y actividades de gabinete":""}</li>
       <li>Recomendaciones de mejora</li>
     </ol>
-    <p class="note">Al pie de cada página solo aparece el nombre y el cargo del asesor (ej. «Nataly Mendez Villegas. Asesor Externo.»). La fecha de evaluación queda registrada en la app, no en el Word.</p>
+    <p class="note">Al pie de cada página aparecen el nombre y el cargo del asesor (ej. «Nataly Mendez Villegas. Asesor Externo.») y el número de página. La fecha de evaluación queda registrada en la app, no en el Word.</p>
     ${resumenHTML(ev,s)}
   </div></div>`;
   const guardarLogo=async id=>{logoId=id;lsSet("vime_sim_logo",id);const cur=S.sim[s.id];await guardar("simulacros",s.id,{...cur,logoFileId:id,evaluador:$("#evNom").value.trim(),evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value});render()};
@@ -1039,7 +1039,8 @@ async function generarDocx(s,e,prog){
   const gp={size:16,color:COL.gray};
   const footer=new Footer({children:[
     // Solo nombre y cargo del asesor (sin «Evaluó» ni fecha; esos datos quedan en la app)
-    new Paragraph({alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:6,color:COL.line,space:4}},children:[T([s.evaluador,s.evaluadorCargo].map(x=>String(x||"").trim().replace(/\.+$/,"")).filter(Boolean).join(". ")+".",{size:18,color:COL.gray})]})
+    new Paragraph({alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.SINGLE,size:6,color:COL.line,space:4}},children:[T([s.evaluador,s.evaluadorCargo].map(x=>String(x||"").trim().replace(/\.+$/,"")).filter(Boolean).join(". ")+".",{size:18,color:COL.gray})]}),
+    new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:20},children:[T("Página ",gp),new TextRun({children:[PageNumber.CURRENT],font:F,size:16,color:COL.gray}),T(" de ",gp),new TextRun({children:[PageNumber.TOTAL_PAGES],font:F,size:16,color:COL.gray})]})
   ]});
 
   const body=[];
