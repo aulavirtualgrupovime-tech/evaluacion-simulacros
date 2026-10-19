@@ -234,7 +234,7 @@ const PUNTOS = [
  {n:2,t:"Evacuación",c:"Total o parcial según lo planeado. Debe tardar menos de 3 minutos; con alerta sísmica, 50 segundos como máximo. Personas dirigidas por rutas de evacuación hacia los puntos de reunión, con orden y sin correr. Rutas de evacuación libres y debidamente señalizadas (incluidos los puntos de reunión)."},
  {n:3,t:"Activación de brigadas",c:"Brigadistas identificados (chaleco, brazalete, casco, gorra). Participación activa y con equipo de respuesta: extintores, botiquín, radio portátil, camilla. Pase de lista de brigadas en instalaciones. No se evalúa el uso de equipo de protección personal."},
  {n:4,t:"Instalaciones",c:"Puesto de Mando, Centro de Triage y Puntos de Reunión, debidamente señalizados. Con SCI: Puesto de Comando (PC), Área de Concentración de Víctimas (ACV) y Área de Espera (AE)."},
- {n:5,t:"Implementación del SCI",c:"Comandante del Incidente identificado, estructura y funciones del Sistema de Comando de Incidentes, terminología SCI, formularios ICS-201, ICS-207 e ICS-211 (NOM-010-SSPC-2019)."},
+ {n:5,t:"Implementación del SCI",c:"Comandante del Incidente identificado, estructura y funciones del Sistema de Comando de Incidentes, terminología SCI, formularios SCI-201, SCI-207 y SCI-211 (NOM-010-SSPC-2019)."},
  {n:6,t:"Conteo de personas evacuadas",c:"Personas formadas en el punto de reunión, de preferencia en filas, para un conteo ágil y confiable; reporte del conteo a la coordinación."},
  {n:7,t:"Atención de la emergencia",c:"Respuesta a la hipótesis y al escenario: combate de fuego, atención de lesionados, búsqueda y rescate, corte de suministros, comunicación y registro de la llamada de auxilio a servicios externos. La llegada de apoyo externo (bomberos, ambulancia, Cruz Roja, SEDENA, policía) es simulada y no se evalúa."},
  {n:8,t:"Participación de usuarios y visitantes",c:"Población fija y flotante participa con orden y atiende indicaciones; atención prioritaria de adultos mayores, personas con discapacidad y niños."},
@@ -937,43 +937,62 @@ function pasoReporte(c,s,e){
   const ev=s.evaluacion;
   if(!ev){c.innerHTML='<div class="empty"><strong>Primero realice la evaluación</strong><p>El reporte se genera a partir de las calificaciones y observaciones del Paso 3.</p></div>';return}
   const falt=ev.puntos.filter(p=>!p.cal).length+(ev.actividades||[]).filter(a=>!a.cal).length;
+  let logoId=s.logoFileId!==undefined?s.logoFileId:lsGet("vime_sim_logo","");
   c.innerHTML=`<div class="grid g2" style="align-items:start">
   <form class="card form" id="fRep">
     <h3 style="color:var(--navy);font-size:1.3rem">Datos del reporte</h3>
-    <div class="field"><label for="evNom">Nombre de la persona que evalúa</label><input type="text" id="evNom" value="${esc(s.evaluador||lsGet("vime_sim_evaluador",""))}"></div>
+    <div class="field"><label for="evNom">Nombre del asesor que evalúa</label><input type="text" id="evNom" value="${esc(s.evaluador||lsGet("vime_sim_evaluador",""))}"></div>
     <div class="field"><label for="evCargo">Cargo o registro (opcional)</label><input type="text" id="evCargo" placeholder="Ej. Consultor externo en Protección Civil" value="${esc(s.evaluadorCargo||lsGet("vime_sim_cargo",""))}"></div>
     <div class="field"><label for="evFecha">Fecha de evaluación</label><input type="date" id="evFecha" value="${esc(s.fechaEvaluacion||hoyISO())}"></div>
-    <fieldset class="field"><legend class="lbl">Contenido adicional</legend>
-      <label><input type="checkbox" id="incFotos" ${s.incFotos!==false?"checked":""}> Anexo de evidencia fotográfica (${(s.fotos||[]).length} fotos)</label>
-      <label><input type="checkbox" id="incGuion" ${s.incGuion?"checked":""}> Anexo con el guion y cronología</label>
-    </fieldset>
+    <div class="field"><span class="lbl">Logotipo del reporte</span>
+      <div id="logoPrev" style="min-height:64px;display:flex;align-items:center;gap:12px;padding:10px;border:1.5px dashed var(--line);border-radius:10px;background:#fff">
+        ${logoId?`<img data-fid="${esc(logoId)}" src="${esc(fotoURL({fileId:logoId}))}" alt="Logotipo del reporte" style="max-height:60px;max-width:240px">`:`<img src="logo_gv.png" alt="Grupo VIME" style="max-height:52px"><img src="logo_aula.png" alt="Aula Virtual" style="max-height:52px">`}
+      </div>
+      <div class="row"><label class="btn alt sm" for="fileLogo">Subir logotipo</label><input type="file" id="fileLogo" accept="image/png,image/jpeg,image/webp" hidden>${logoId?'<button type="button" class="btn alt sm" id="logoVime">Usar los de Grupo VIME</button>':""}</div>
+      <span class="hint">PNG o JPG. Aparece en el encabezado de cada página del Word. Si no sube uno, se usan los logotipos de Grupo VIME. Se recuerda para los siguientes reportes.</span>
+      <span class="progress" id="logoProg"></span>
+    </div>
+    <label><input type="checkbox" id="incGuion" ${s.incGuion?"checked":""}> Agregar como anexo el guion y cronología</label>
     ${falt?`<div class="alert warn">Hay ${falt} punto(s) sin calificar. Puede generar el reporte, pero aparecerán como «Sin calificar».</div>`:""}
     <div class="row"><button class="btn orange" type="submit" id="genW">Generar reporte en Word</button></div>
     <div id="repOut" class="progress"></div>
   </form>
   <div class="card grid" style="gap:12px">
-    <h3 style="color:var(--navy);font-size:1.2rem">Contenido del reporte</h3>
+    <h3 style="color:var(--navy);font-size:1.2rem">Evidencia Fotográfica y Evaluación de Simulacro</h3>
     <ol style="margin:0;padding-left:1.3em;display:grid;gap:4px">
-      <li>Datos del establecimiento y del simulacro</li>
-      <li>Calificación general y resumen de resultados</li>
-      <li>Los 10 puntos evaluados: calificación (Bueno, Regular, Malo) y observaciones</li>
-      ${s.tipo==="De gabinete"?"<li>Actividades del simulacro de gabinete</li>":""}
-      <li>Recomendaciones de mejora por punto y generales</li>
-      <li>Videos de referencia (enlaces)</li>
-      <li>Nombre de quien evalúa, fecha de evaluación y firma</li>
-      <li>Anexos: evidencia fotográfica y guion (opcionales)</li>
+      <li>Datos del establecimiento</li>
+      <li>Datos del simulacro</li>
+      <li>Evidencia fotográfica (${(s.fotos||[]).length} fotos con la actividad del guion${(s.videos||[]).length?" y enlaces de video":""})</li>
+      <li>Resultado general</li>
+      <li>Evaluación de protocolo${s.tipo==="De gabinete"?" y actividades de gabinete":""}</li>
+      <li>Recomendaciones de mejora</li>
     </ol>
+    <p class="note">Al pie de cada página: nombre de quien evalúa, fecha de evaluación y número de página.</p>
     ${resumenHTML(ev,s)}
   </div></div>`;
+  const guardarLogo=async id=>{logoId=id;lsSet("vime_sim_logo",id);const cur=S.sim[s.id];await guardar("simulacros",s.id,{...cur,logoFileId:id,evaluador:$("#evNom").value.trim(),evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value});render()};
+  $("#fileLogo").onchange=async()=>{
+    const f=$("#fileLogo").files[0];if(!f)return;
+    const pr=$("#logoProg");pr.textContent="Subiendo logotipo…";
+    try{
+      let blob=f,mime=f.type||"image/png";
+      const bmp=await createImageBitmap(f);
+      if(f.size>1.5e6||Math.max(bmp.width,bmp.height)>1200){const r=Math.min(1,1200/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*r);cv.height=Math.round(bmp.height*r);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);blob=await new Promise(res=>cv.toBlob(res,"image/png"));mime="image/png"}
+      const up=await api("subirFoto",{simId:"Logotipos",b64:await blobAB64(blob),mime,nombre:"logotipo_"+Date.now()+(mime==="image/png"?".png":".jpg")});
+      S.blobs.set(up.fileId,blob);S.urls.set(up.fileId,URL.createObjectURL(blob));IDB.put(up.fileId,blob);
+      await guardarLogo(up.fileId);toast("Logotipo listo para el reporte");
+    }catch(err){pr.textContent="No se pudo subir el logotipo: "+(err.mensaje||err.message||err)}
+  };
+  if($("#logoVime"))$("#logoVime").onclick=()=>guardarLogo("");
   $("#fRep").onsubmit=async ev2=>{ev2.preventDefault();
     const nom=$("#evNom").value.trim();if(!nom){toast("Escriba el nombre de quien evalúa");return}
     lsSet("vime_sim_evaluador",nom);lsSet("vime_sim_cargo",$("#evCargo").value.trim());
-    const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incFotos:$("#incFotos").checked,incGuion:$("#incGuion").checked};delete o.id;
+    const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incGuion:$("#incGuion").checked,logoFileId:logoId||""};delete o.id;
     const out=$("#repOut");const b=$("#genW");b.disabled=true;trabajando=true;
     try{
       out.textContent="Armando el documento…";
       const blob=await generarDocx({...o,id:s.id},e,t=>out.textContent=t);
-      const nombre=`Evaluacion_Simulacro_${(e.nombreComercial||e.razonSocial).replace(/[^\wÁÉÍÓÚÑáéíóúñ]+/g,"_").slice(0,40)}_No${String(o.numero).replace(/\W+/g,"")}_${o.fechaEvaluacion||hoyISO()}.docx`;
+      const nombre=`Evidencia_y_Evaluacion_Simulacro_${(e.nombreComercial||e.razonSocial).replace(/[^\wÁÉÍÓÚÑáéíóúñ]+/g,"_").slice(0,40)}_No${String(o.numero).replace(/\W+/g,"")}_${o.fechaEvaluacion||hoyISO()}.docx`;
         const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
       o.reporteFecha=new Date().toISOString();
       trabajando=false;await guardar("simulacros",s.id,o);
@@ -1002,20 +1021,36 @@ async function generarDocx(s,e,prog){
   const kvTable=(rows)=>new Table({width:{size:W,type:WidthType.DXA},columnWidths:[2900,W-2900],layout:TableLayoutType.FIXED,rows:rows.map(([k,v])=>new TableRow({children:[cell(P([T(k,{bold:true,color:COL.navy,size:21})],{after:0}),{w:2900,fill:COL.soft}),cell(String(v||"—").split("\n").map(l=>P([T(l,{size:21})],{after:0})),{w:W-2900})]}))});
 
   prog("Cargando logotipos…");
-  const logoGV=await bytesDe("logo_gv.png");const logoAula=await bytesDe("logo_aula.png");
-  const header=new Header({children:[new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W/2,W/2],layout:TableLayoutType.FIXED,borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.SINGLE,size:12,color:COL.gold},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
-    rows:[new TableRow({children:[
-      new TableCell({borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},children:[new Paragraph({children:[new ImageRun({data:logoGV,transformation:{width:170,height:53}})]})]}),
-      new TableCell({borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}},verticalAlign:VerticalAlign.CENTER,children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[new ImageRun({data:logoAula,transformation:{width:72,height:55}})]})]})
-    ]})]})]});
-  const footer=new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[T("Grupo VIME · Asesoría Corporativa Integral · www.aulavirtualgrupovime.com · Página ",{size:16,color:COL.gray}),new TextRun({children:[PageNumber.CURRENT],font:F,size:16,color:COL.gray}),T(" de ",{size:16,color:COL.gray}),new TextRun({children:[PageNumber.TOTAL_PAGES],font:F,size:16,color:COL.gray})]})]});
+  const sinBorde={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}};
+  let celdasEnc;
+  let logoPropio=null;
+  if(s.logoFileId){ try{ const lb=await fotoBlob({fileId:s.logoFileId}); const d=await dimsDe(lb); const r=Math.min(220/d.w,60/d.h); logoPropio={data:new Uint8Array(await lb.arrayBuffer()),w:Math.round(d.w*r),h:Math.round(d.h*r)} }catch(err){ logoPropio=null } }
+  if(logoPropio){
+    celdasEnc=[new TableCell({borders:sinBorde,width:{size:W,type:WidthType.DXA},children:[new Paragraph({children:[new ImageRun({data:logoPropio.data,transformation:{width:logoPropio.w,height:logoPropio.h}})]})]})];
+  } else {
+    const logoGV=await bytesDe("logo_gv.png");const logoAula=await bytesDe("logo_aula.png");
+    celdasEnc=[
+      new TableCell({borders:sinBorde,children:[new Paragraph({children:[new ImageRun({data:logoGV,transformation:{width:170,height:53}})]})]}),
+      new TableCell({borders:sinBorde,verticalAlign:VerticalAlign.CENTER,children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[new ImageRun({data:logoAula,transformation:{width:72,height:55}})]})]})
+    ];
+  }
+  const header=new Header({children:[new Table({width:{size:W,type:WidthType.DXA},columnWidths:logoPropio?[W]:[W/2,W/2],layout:TableLayoutType.FIXED,borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.SINGLE,size:12,color:COL.gold},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
+    rows:[new TableRow({children:celdasEnc})]})]});
+  const gp={size:16,color:COL.gray};
+  const footer=new Footer({children:[
+    new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:20},border:{top:{style:BorderStyle.SINGLE,size:6,color:COL.line,space:4}},children:[T("Evaluó: ",{...gp,bold:true}),T(`${s.evaluador||""}${s.evaluadorCargo?", "+s.evaluadorCargo:""}`,gp),T("   ·   Fecha de evaluación: ",{...gp,bold:true}),T(fFecha(s.fechaEvaluacion,false),gp)]}),
+    new Paragraph({alignment:AlignmentType.CENTER,children:[T("Página ",gp),new TextRun({children:[PageNumber.CURRENT],font:F,size:16,color:COL.gray}),T(" de ",gp),new TextRun({children:[PageNumber.TOTAL_PAGES],font:F,size:16,color:COL.gray})]})
+  ]});
 
   const body=[];
-  body.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:120,after:60},children:[new TextRun({text:"REPORTE DE EVALUACIÓN DE SIMULACRO",font:F,size:34,bold:true,color:COL.navy})]}));
+  body.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:120,after:60},children:[new TextRun({text:"EVIDENCIA FOTOGRÁFICA Y EVALUACIÓN DE SIMULACRO",font:F,size:32,bold:true,color:COL.navy})]}));
   body.push(P([T(`Simulacro ${s.tipo.toLowerCase()} No. ${s.numero} · ${s.hipotesis}`,{size:24,color:COL.orange,bold:true})],{align:AlignmentType.CENTER,after:240}));
 
+  // 1. Datos del establecimiento
   body.push(H("1. Datos del establecimiento"));
   body.push(kvTable([["Razón Social",e.razonSocial],["Nombre Comercial",e.nombreComercial],["Dirección",e.direccion],["NRPC",e.nrpc],["Tipo de riesgo",e.riesgo],["Sistema de Comando de Incidentes",e.sci]]));
+
+  // 2. Datos del simulacro
   body.push(H("2. Datos del simulacro"));
   const m=s.medidos||{};const t=parseMMSS(m.tiempoEvac);
   const filasSim=[["Número de simulacro",s.numero],["Fecha y hora",fFecha(s.fechaHora)],["Tipo de simulacro",s.tipo],["Hipótesis",s.hipotesis],["Alertamiento",s.alertaSismica?"Alerta sísmica (tiempo máximo de evacuación: 50 segundos)":"Alarma (tiempo de evacuación menor a 3 minutos)"],["Tipo de evacuación",s.evacuacion],["Programación",s.programacion]];
@@ -1026,63 +1061,9 @@ async function generarDocx(s,e,prog){
   filasSim.push(["Evidencias revisadas",`${(s.fotos||[]).length} fotografía(s)/cuadro(s) de video · ${(s.videos||[]).length} video(s) en Drive${s.guion?" · guion y cronología":""}`]);
   body.push(kvTable(filasSim));
 
-  body.push(H("3. Resultado general"));
-  const cnt={Bueno:0,Regular:0,Malo:0,"No aplica":0,"":0};ev.puntos.forEach(p=>cnt[p.cal||""]++);
-  const gc=g?COL[g.txt]:COL[""];
-  body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[3200,W-3200],layout:TableLayoutType.FIXED,rows:[new TableRow({cantSplit:true,children:[
-    cell([P([T("CALIFICACIÓN GENERAL",{size:18,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:40}),P([T(g?`${g.txt}`:"Sin calificar",{size:40,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:20}),P([T(g?`${g.pct} %`:"",{size:26,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:0})],{w:3200,fill:gc[1],va:VerticalAlign.CENTER}),
-    cell([P([T(`Bueno: ${cnt.Bueno}   ·   Regular: ${cnt.Regular}   ·   Malo: ${cnt.Malo}${cnt["No aplica"]?"   ·   No aplica: "+cnt["No aplica"]:""}${cnt[""]?"   ·   Sin calificar: "+cnt[""]:""}`,{bold:true,size:22})],{after:100}),...multi(ev.resumen||"",{size:21}),P([T("Escala: Bueno = 2, Regular = 1, Malo = 0 sobre los puntos que aplican. General: Bueno ≥ 85 %, Regular ≥ 60 %, Malo < 60 %.",{size:16,color:COL.gray,it:true})],{after:0})],{w:W-3200})
-  ]})]}));
-
-  body.push(H(s.tipo==="De gabinete"?"4. Evaluación de los 10 puntos en el guion y la cronología":"4. Evaluación de los 10 puntos"));
-  const wN=620,wP=2400,wC=1500,wO=W-wN-wP-wC;
-  const hdr=(txt,w)=>cell(P([T(txt,{bold:true,color:"FFFFFF",size:20})],{after:0}),{w,fill:COL.navy,va:VerticalAlign.CENTER});
-  const calCell=(cal,w)=>{const cc=COL[cal||""];return cell(P([T(cal||"Sin calificar",{bold:true,color:cc[0],size:20})],{align:AlignmentType.CENTER,after:0}),{w,fill:cc[1],va:VerticalAlign.CENTER})};
-  body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[wN,wP,wC,wO],layout:TableLayoutType.FIXED,rows:[
-    new TableRow({tableHeader:true,children:[hdr("No.",wN),hdr("Punto evaluado",wP),hdr("Calificación",wC),hdr("Observaciones detectadas",wO)]}),
-    ...ev.puntos.map(p=>{const fs=(p.fotos||[]).filter(n=>n<=(s.fotos||[]).length);return new TableRow({cantSplit:true,children:[
-      cell(P([T(p.n,{bold:true,color:COL.orange})],{align:AlignmentType.CENTER,after:0}),{w:wN}),
-      cell(P([T(PUNTOS[p.n-1].t,{bold:true,size:20,color:COL.navy})],{after:0}),{w:wP}),
-      calCell(p.cal,wC),
-      cell([...multi(p.obs||"—",{size:20}),...(fs.length||(p.videos||[]).length?[P([T(evidTxt(fs,p.videos),{size:17,color:COL.gray,it:true})],{after:0})]:[])],{w:wO})
-    ]})})]}));
-
-  let sec=5;
-  if(s.tipo==="De gabinete"&&(ev.actividades||[]).length){
-    body.push(H(`${sec++}. Actividades del simulacro de gabinete`));
-    const w1=620,w2=3200,w3=1500,w4=W-w1-w2-w3;
-    body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[w1,w2,w3,w4],layout:TableLayoutType.FIXED,rows:[
-      new TableRow({tableHeader:true,children:[hdr("No.",w1),hdr("Actividad",w2),hdr("Calificación",w3),hdr("Observaciones",w4)]}),
-      ...ev.actividades.map(a=>new TableRow({children:[cell(P([T(a.n,{bold:true,color:COL.orange})],{align:AlignmentType.CENTER,after:0}),{w:w1}),cell(P([T(ACT_GAB[a.n-1].t,{bold:true,size:20,color:COL.navy})],{after:0}),{w:w2}),calCell(a.cal,w3),cell(multi(a.obs||"—",{size:20}),{w:w4})]}))]}));
-  }
-
-  body.push(H(`${sec++}. Recomendaciones de mejora`));
-  const recP=ev.puntos.filter(p=>p.rec&&p.rec.trim());
-  if(recP.length){
-    body.push(P([T("Por punto evaluado",{bold:true,color:COL.navy,size:23})],{after:80,keepNext:true}));
-    recP.forEach(p=>body.push(new Paragraph({spacing:{after:100,line:300},indent:{left:360,hanging:360},children:[T(`${p.n}. ${PUNTOS[p.n-1].t}: `,{bold:true,size:21}),T(p.rec,{size:21})]})));
-  }
-  if((ev.recomendaciones||[]).length){
-    body.push(P([T("Recomendaciones generales",{bold:true,color:COL.navy,size:23})],{before:160,after:80,keepNext:true}));
-    ev.recomendaciones.forEach((r,i)=>body.push(new Paragraph({spacing:{after:100,line:300},indent:{left:360,hanging:360},children:[T(`${i+1}.  `,{bold:true,color:COL.orange,size:21}),T(r,{size:21})]})));
-  }
-  if(!recP.length&&!(ev.recomendaciones||[]).length) body.push(P("Sin recomendaciones registradas."));
-
-  if((s.videos||[]).length){
-    body.push(H(`${sec++}. Videos de referencia`));
-    s.videos.forEach((v,i)=>body.push(new Paragraph({spacing:{after:80},children:[T(`V${i+1}. ${v.desc||"Video"}: `,{bold:true,size:21}),new D.ExternalHyperlink({link:v.url,children:[new TextRun({text:v.url,style:"Hyperlink",font:F,size:19})]})]})));
-  }
-
-  body.push(H(`${sec++}. Evaluación realizada por`));
-  body.push(kvTable([["Nombre de la persona que evalúa",s.evaluador],...(s.evaluadorCargo?[["Cargo o registro",s.evaluadorCargo]]:[]),["Fecha de evaluación",fFecha(s.fechaEvaluacion,false)]]));
-  body.push(P([T("")],{before:600,after:0}));
-  body.push(P([T("_________________________________________",{color:COL.gray})],{align:AlignmentType.CENTER,after:40}));
-  body.push(P([T(s.evaluador,{bold:true})],{align:AlignmentType.CENTER,after:0}));
-  body.push(P([T("Firma de la persona evaluadora",{size:18,color:COL.gray})],{align:AlignmentType.CENTER}));
-
-  if(s.incFotos!==false&&(s.fotos||[]).length){
-    body.push(new Paragraph({children:[new PageBreak()]}));
-    body.push(H("Anexo A. Evidencia fotográfica"));
+  // 3. Evidencia fotográfica
+  body.push(H("3. Evidencia fotográfica"));
+  if((s.fotos||[]).length){
     const cw=W/2;const filas=[];
     for(let i=0;i<s.fotos.length;i+=2){
       const celdas=[];
@@ -1100,15 +1081,64 @@ async function generarDocx(s,e,prog){
       filas.push(new TableRow({cantSplit:true,children:celdas}));
     }
     body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[cw,cw],layout:TableLayoutType.FIXED,rows:filas}));
+  } else body.push(P("No se integraron fotografías a este simulacro."));
+  if((s.videos||[]).length){
+    body.push(P([T("Videos de referencia",{bold:true,color:COL.navy,size:23})],{before:200,after:80,keepNext:true}));
+    s.videos.forEach((v,i)=>body.push(new Paragraph({spacing:{after:80},children:[T(`V${i+1}. ${v.desc||"Video"}: `,{bold:true,size:21}),new D.ExternalHyperlink({link:v.url,children:[new TextRun({text:v.url,style:"Hyperlink",font:F,size:19})]})]})));
   }
+
+  // 4. Resultado general
+  body.push(H("4. Resultado general"));
+  const cnt={Bueno:0,Regular:0,Malo:0,"No aplica":0,"":0};ev.puntos.forEach(p=>cnt[p.cal||""]++);
+  const gc=g?COL[g.txt]:COL[""];
+  body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[3200,W-3200],layout:TableLayoutType.FIXED,rows:[new TableRow({cantSplit:true,children:[
+    cell([P([T("CALIFICACIÓN GENERAL",{size:18,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:40}),P([T(g?`${g.txt}`:"Sin calificar",{size:40,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:20}),P([T(g?`${g.pct} %`:"",{size:26,bold:true,color:gc[0]})],{align:AlignmentType.CENTER,after:0})],{w:3200,fill:gc[1],va:VerticalAlign.CENTER}),
+    cell([P([T(`Bueno: ${cnt.Bueno}   ·   Regular: ${cnt.Regular}   ·   Malo: ${cnt.Malo}${cnt["No aplica"]?"   ·   No aplica: "+cnt["No aplica"]:""}${cnt[""]?"   ·   Sin calificar: "+cnt[""]:""}`,{bold:true,size:22})],{after:100}),...multi(ev.resumen||"",{size:21}),P([T("Escala: Bueno = 2, Regular = 1, Malo = 0 sobre los puntos que aplican. General: Bueno ≥ 85 %, Regular ≥ 60 %, Malo < 60 %.",{size:16,color:COL.gray,it:true})],{after:0})],{w:W-3200})
+  ]})]}));
+
+  // 5. Evaluación de protocolo
+  body.push(H("5. Evaluación de protocolo"));
+  if(s.tipo==="De gabinete") body.push(P([T("Revisión de los 10 puntos del protocolo en el guion y la cronología del simulacro.",{size:20,color:COL.gray,it:true})],{after:100}));
+  const wN=620,wP=2400,wC=1500,wO=W-wN-wP-wC;
+  const hdr=(txt,w)=>cell(P([T(txt,{bold:true,color:"FFFFFF",size:20})],{after:0}),{w,fill:COL.navy,va:VerticalAlign.CENTER});
+  const calCell=(cal,w)=>{const cc=COL[cal||""];return cell(P([T(cal||"Sin calificar",{bold:true,color:cc[0],size:20})],{align:AlignmentType.CENTER,after:0}),{w,fill:cc[1],va:VerticalAlign.CENTER})};
+  body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[wN,wP,wC,wO],layout:TableLayoutType.FIXED,rows:[
+    new TableRow({tableHeader:true,children:[hdr("No.",wN),hdr("Punto evaluado",wP),hdr("Calificación",wC),hdr("Observaciones detectadas",wO)]}),
+    ...ev.puntos.map(p=>{const fs=(p.fotos||[]).filter(n=>n<=(s.fotos||[]).length);return new TableRow({cantSplit:true,children:[
+      cell(P([T(p.n,{bold:true,color:COL.orange})],{align:AlignmentType.CENTER,after:0}),{w:wN}),
+      cell(P([T(PUNTOS[p.n-1].t,{bold:true,size:20,color:COL.navy})],{after:0}),{w:wP}),
+      calCell(p.cal,wC),
+      cell([...multi(p.obs||"—",{size:20}),...(fs.length||(p.videos||[]).length?[P([T(evidTxt(fs,p.videos),{size:17,color:COL.gray,it:true})],{after:0})]:[])],{w:wO})
+    ]})})]}));
+  if(s.tipo==="De gabinete"&&(ev.actividades||[]).length){
+    body.push(P([T("Actividades del simulacro de gabinete",{bold:true,color:COL.navy,size:23})],{before:240,after:100,keepNext:true}));
+    const w1=620,w2=3200,w3=1500,w4=W-w1-w2-w3;
+    body.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:[w1,w2,w3,w4],layout:TableLayoutType.FIXED,rows:[
+      new TableRow({tableHeader:true,children:[hdr("No.",w1),hdr("Actividad",w2),hdr("Calificación",w3),hdr("Observaciones",w4)]}),
+      ...ev.actividades.map(a=>new TableRow({cantSplit:true,children:[cell(P([T(a.n,{bold:true,color:COL.orange})],{align:AlignmentType.CENTER,after:0}),{w:w1}),cell(P([T(ACT_GAB[a.n-1].t,{bold:true,size:20,color:COL.navy})],{after:0}),{w:w2}),calCell(a.cal,w3),cell(multi(a.obs||"—",{size:20}),{w:w4})]}))]}));
+  }
+
+  // 6. Recomendaciones de mejora
+  body.push(H("6. Recomendaciones de mejora"));
+  const recP=ev.puntos.filter(p=>p.rec&&p.rec.trim());
+  if(recP.length){
+    body.push(P([T("Por punto evaluado",{bold:true,color:COL.navy,size:23})],{after:80,keepNext:true}));
+    recP.forEach(p=>body.push(new Paragraph({spacing:{after:100,line:300},indent:{left:360,hanging:360},children:[T(`${p.n}. ${PUNTOS[p.n-1].t}: `,{bold:true,size:21}),T(p.rec,{size:21})]})));
+  }
+  if((ev.recomendaciones||[]).length){
+    body.push(P([T("Recomendaciones generales",{bold:true,color:COL.navy,size:23})],{before:160,after:80,keepNext:true}));
+    ev.recomendaciones.forEach((r,i)=>body.push(new Paragraph({spacing:{after:100,line:300},indent:{left:360,hanging:360},children:[T(`${i+1}.  `,{bold:true,color:COL.orange,size:21}),T(r,{size:21})]})));
+  }
+  if(!recP.length&&!(ev.recomendaciones||[]).length) body.push(P("Sin recomendaciones registradas."));
+
   if(s.incGuion&&s.guion){
     body.push(new Paragraph({children:[new PageBreak()]}));
-    body.push(H(`Anexo ${s.incFotos!==false&&(s.fotos||[]).length?"B":"A"}. Guion y cronología del simulacro`));
+    body.push(H("Anexo. Guion y cronología del simulacro"));
     s.guion.split("\n").forEach(l=>body.push(P([T(l,{size:20})],{after:40})));
   }
 
   prog("Compilando el archivo Word…");
-  const doc=new Document({creator:"Grupo VIME",title:"Reporte de Evaluación de Simulacro",
+  const doc=new Document({creator:s.evaluador||"Grupo VIME",title:"Evidencia Fotográfica y Evaluación de Simulacro",
     styles:{default:{document:{run:{font:F,size:22}}}},
     sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1600,bottom:1100,left:1134,right:1134,header:500,footer:500}}},headers:{default:header},footers:{default:footer},children:body}]});
   return await Packer.toBlob(doc);
