@@ -272,7 +272,7 @@ function fmtSeg(n){if(n==null)return "—";const m=Math.floor(n/60),s=Math.round
 
 /* ===================== Servidor (Google Apps Script) ===================== */
 // Enlace del servidor de Apps Script (implementación como aplicación web). Si queda vacío, la app lo pide al entrar.
-const SERVIDOR_URL = "";
+const SERVIDOR_URL = "https://script.google.com/macros/s/AKfycbxXajlwDVUHp1C3yxPtZvHIGjkJt6qRjYeMNOjrtFwNjmiYAYoxlwuwWwG5p5By8GuTLg/exec";
 const S = {est:{}, sim:{}, blobs:new Map(), urls:new Map(), ready:false, ia:false, modelo:""};
 let CFG = lsGet("vime_sim_cfg",{url:SERVIDOR_URL,clave:""});
 if(SERVIDOR_URL) CFG.url=SERVIDOR_URL;
