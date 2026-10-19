@@ -273,7 +273,9 @@ function fmtSeg(n){if(n==null)return "—";const m=Math.floor(n/60),s=Math.round
 /* ===================== Servidor (Google Apps Script) ===================== */
 // Enlace del servidor de Apps Script (implementación como aplicación web). Si queda vacío, la app lo pide al entrar.
 const SERVIDOR_URL = "https://script.google.com/macros/s/AKfycbxXajlwDVUHp1C3yxPtZvHIGjkJt6qRjYeMNOjrtFwNjmiYAYoxlwuwWwG5p5By8GuTLg/exec";
-const S = {est:{}, sim:{}, blobs:new Map(), urls:new Map(), ready:false, ia:false, modelo:""};
+const S = {est:{}, sim:{}, ajustes:{logos:[]}, blobs:new Map(), urls:new Map(), ready:false, ia:false, modelo:""};
+const ID_AJUSTES = "_ajustes";  // registro oculto en la hoja de establecimientos (galería de logotipos)
+async function guardarAjustes(){ try{ await api("guardar",{col:"establecimientos",id:ID_AJUSTES,obj:{...S.ajustes,id:ID_AJUSTES,actualizado:new Date().toISOString()}}) }catch(e){ toast("No se pudo guardar la galería: "+(e.mensaje||e)); throw e } }
 let CFG = lsGet("vime_sim_cfg",{url:SERVIDOR_URL,clave:""});
 if(SERVIDOR_URL) CFG.url=SERVIDOR_URL;
 
@@ -354,8 +356,12 @@ async function conectar(){
 async function recargar(){
   const d=await api("listar");
   S.est={};S.sim={};
-  (d.establecimientos||[]).forEach(o=>S.est[o.id]=o);
+  S.ajustes={logos:[]};
+  (d.establecimientos||[]).forEach(o=>{ if(o.id===ID_AJUSTES) S.ajustes={logos:[],...o}; else S.est[o.id]=o });
   (d.simulacros||[]).forEach(o=>S.sim[o.id]=o);
+  // Logotipo subido con la versión anterior (uno solo): pasa a la galería
+  const viejo=lsGet("vime_sim_logo","");
+  if(viejo){ if(!(S.ajustes.logos||[]).some(l=>l.fileId===viejo)){ S.ajustes.logos=[...(S.ajustes.logos||[]),{fileId:viejo,nombre:"Logotipo del asesor"}]; if(S.ajustes.logoIzq===undefined)S.ajustes.logoIzq=viejo; guardarAjustes().catch(()=>{}) } lsSet("vime_sim_logo","") }
   S.ready=true; pintarEstado(); render();
 }
 async function iniciar(){
@@ -937,20 +943,35 @@ function pasoReporte(c,s,e){
   const ev=s.evaluacion;
   if(!ev){c.innerHTML='<div class="empty"><strong>Primero realice la evaluación</strong><p>El reporte se genera a partir de las calificaciones y observaciones del Paso 3.</p></div>';return}
   const falt=ev.puntos.filter(p=>!p.cal).length+(ev.actividades||[]).filter(a=>!a.cal).length;
-  let logoId=s.logoFileId!==undefined?s.logoFileId:lsGet("vime_sim_logo","");
+  // Logotipos: "gv" y "aula" son los de Grupo VIME; un id de Drive es de la galería; "" es ninguno
+  let selIzq=s.logoIzq!==undefined?s.logoIzq:(s.logoFileId?s.logoFileId:(S.ajustes.logoIzq!==undefined?S.ajustes.logoIzq:"gv"));
+  let selDer=s.logoDer!==undefined?s.logoDer:(s.logoFileId?"":(e.logoCliente!==undefined?e.logoCliente:"aula"));
+  const galeria=S.ajustes.logos||[];
+  const opcionesLogo=sel=>[["gv","Grupo VIME"],["aula","Aula Virtual Grupo VIME"],...galeria.map(l=>[l.fileId,l.nombre||"Logotipo"]),["","Ninguno"]]
+    .map(([v,n])=>`<option value="${esc(v)}" ${v===sel?"selected":""}>${esc(n)}</option>`).join("");
+  const imgLogo=v=>v==="gv"?'<img src="logo_gv.png" alt="Grupo VIME" style="max-height:56px;max-width:100%">':v==="aula"?'<img src="logo_aula.png" alt="Aula Virtual Grupo VIME" style="max-height:56px;max-width:100%">':v?`<img data-fid="${esc(v)}" src="${esc(fotoURL({fileId:v}))}" alt="Logotipo" style="max-height:56px;max-width:100%">`:'<span class="note">Sin logotipo</span>';
   c.innerHTML=`<div class="grid g2" style="align-items:start">
   <form class="card form" id="fRep">
     <h3 style="color:var(--navy);font-size:1.3rem">Datos del reporte</h3>
     <div class="field"><label for="evNom">Nombre del asesor que evalúa</label><input type="text" id="evNom" value="${esc(s.evaluador||lsGet("vime_sim_evaluador",""))}"></div>
     <div class="field"><label for="evCargo">Cargo</label><input type="text" id="evCargo" placeholder="Ej. Asesor Externo" value="${esc(s.evaluadorCargo||lsGet("vime_sim_cargo",""))}"></div>
     <div class="field"><label for="evFecha">Fecha de evaluación <span class="hint">(solo en la app)</span></label><input type="date" id="evFecha" value="${esc(s.fechaEvaluacion||hoyISO())}"></div>
-    <div class="field"><span class="lbl">Logotipo del reporte</span>
-      <div id="logoPrev" style="min-height:64px;display:flex;align-items:center;gap:12px;padding:10px;border:1.5px dashed var(--line);border-radius:10px;background:#fff">
-        ${logoId?`<img data-fid="${esc(logoId)}" src="${esc(fotoURL({fileId:logoId}))}" alt="Logotipo del reporte" style="max-height:60px;max-width:240px">`:`<img src="logo_gv.png" alt="Grupo VIME" style="max-height:52px"><img src="logo_aula.png" alt="Aula Virtual" style="max-height:52px">`}
+    <div class="field"><span class="lbl">Logotipos del encabezado</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:72px;padding:10px 14px;border:1.5px dashed var(--line);border-bottom:3px solid var(--gold);border-radius:10px;background:#fff">
+        <div style="flex:1;min-width:0">${imgLogo(selIzq)}</div><div style="flex:1;min-width:0;text-align:right">${imgLogo(selDer)}</div>
       </div>
-      <div class="row"><label class="btn alt sm" for="fileLogo">Subir logotipo</label><input type="file" id="fileLogo" accept="image/png,image/jpeg,image/webp" hidden>${logoId?'<button type="button" class="btn alt sm" id="logoVime">Usar los de Grupo VIME</button>':""}</div>
-      <span class="hint">PNG o JPG. Aparece en el encabezado de cada página del Word. Si no sube uno, se usan los logotipos de Grupo VIME. Se recuerda para los siguientes reportes.</span>
-      <span class="progress" id="logoProg"></span>
+      <div class="grid g2" style="gap:12px">
+        <div class="field"><label for="selIzq">Izquierda (asesor)</label><select id="selIzq">${opcionesLogo(selIzq)}</select></div>
+        <div class="field"><label for="selDer">Derecha (cliente)</label><select id="selDer">${opcionesLogo(selDer)}</select></div>
+      </div>
+      <span class="hint">El logotipo de la izquierda se recuerda para todos los reportes; el de la derecha, para este establecimiento.</span>
+      <details ${galeria.length?"":"open"}><summary class="lbl" style="cursor:pointer">Galería de logotipos (${galeria.length})</summary>
+        <div style="display:grid;gap:10px;margin-top:10px">
+          ${galeria.map((l,i)=>`<div class="vitem" style="background:#fff"><img data-fid="${esc(l.fileId)}" src="${esc(fotoURL(l))}" alt="" style="height:40px;max-width:110px;object-fit:contain"><input type="text" data-lnom="${i}" aria-label="Nombre del logotipo" value="${esc(l.nombre)}" style="flex:1;min-width:120px;min-height:40px"><button type="button" class="btn danger sm" data-lquitar="${i}">Quitar</button></div>`).join("")||'<p class="note">Aún no hay logotipos. Suba el del asesor y los de sus clientes; quedarán guardados en su Drive para todos los reportes.</p>'}
+          <div class="row"><label class="btn alt sm" for="fileLogo">Subir logotipo(s)</label><input type="file" id="fileLogo" accept="image/png,image/jpeg,image/webp" multiple hidden></div>
+          <span class="progress" id="logoProg"></span>
+        </div>
+      </details>
     </div>
     <label><input type="checkbox" id="incGuion" ${s.incGuion?"checked":""}> Agregar como anexo el guion y cronología</label>
     ${falt?`<div class="alert warn">Hay ${falt} punto(s) sin calificar. Puede generar el reporte, pero aparecerán como «Sin calificar».</div>`:""}
@@ -970,24 +991,47 @@ function pasoReporte(c,s,e){
     <p class="note">Al pie de cada página aparecen el nombre y el cargo del asesor (ej. «Nataly Mendez Villegas. Asesor Externo.») y el número de página. La fecha de evaluación queda registrada en la app, no en el Word.</p>
     ${resumenHTML(ev,s)}
   </div></div>`;
-  const guardarLogo=async id=>{logoId=id;lsSet("vime_sim_logo",id);const cur=S.sim[s.id];await guardar("simulacros",s.id,{...cur,logoFileId:id,evaluador:$("#evNom").value.trim(),evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value});render()};
+  const datosForm=()=>({evaluador:$("#evNom").value.trim(),evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value});
+  const elegir=async()=>{
+    selIzq=$("#selIzq").value;selDer=$("#selDer").value;
+    await guardar("simulacros",s.id,{...S.sim[s.id],...datosForm(),logoIzq:selIzq,logoDer:selDer});
+    if(S.ajustes.logoIzq!==selIzq){S.ajustes.logoIzq=selIzq;await guardarAjustes()}
+    const est=S.est[e.id];if(est&&est.logoCliente!==selDer)await guardar("establecimientos",e.id,{...est,logoCliente:selDer});
+    render();
+  };
+  $("#selIzq").onchange=elegir;$("#selDer").onchange=elegir;
   $("#fileLogo").onchange=async()=>{
-    const f=$("#fileLogo").files[0];if(!f)return;
-    const pr=$("#logoProg");pr.textContent="Subiendo logotipo…";
+    const fs=[...$("#fileLogo").files];if(!fs.length)return;
+    const pr=$("#logoProg");
     try{
-      let blob=f,mime=f.type||"image/png";
-      const bmp=await createImageBitmap(f);
-      if(f.size>1.5e6||Math.max(bmp.width,bmp.height)>1200){const r=Math.min(1,1200/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*r);cv.height=Math.round(bmp.height*r);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);blob=await new Promise(res=>cv.toBlob(res,"image/png"));mime="image/png"}
-      const up=await api("subirFoto",{simId:"Logotipos",b64:await blobAB64(blob),mime,nombre:"logotipo_"+Date.now()+(mime==="image/png"?".png":".jpg")});
-      S.blobs.set(up.fileId,blob);S.urls.set(up.fileId,URL.createObjectURL(blob));IDB.put(up.fileId,blob);
-      await guardarLogo(up.fileId);toast("Logotipo listo para el reporte");
+      for(let k=0;k<fs.length;k++){
+        const f=fs[k];pr.textContent=`Subiendo logotipo ${k+1} de ${fs.length}…`;
+        let blob=f,mime=f.type||"image/png";
+        const bmp=await createImageBitmap(f);
+        if(f.size>1.5e6||Math.max(bmp.width,bmp.height)>1200){const r=Math.min(1,1200/Math.max(bmp.width,bmp.height));const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*r);cv.height=Math.round(bmp.height*r);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);blob=await new Promise(res=>cv.toBlob(res,"image/png"));mime="image/png"}
+        const up=await api("subirFoto",{simId:"Logotipos",b64:await blobAB64(blob),mime,nombre:"logotipo_"+Date.now()+(mime==="image/png"?".png":".jpg")});
+        S.blobs.set(up.fileId,blob);S.urls.set(up.fileId,URL.createObjectURL(blob));IDB.put(up.fileId,blob);
+        S.ajustes.logos=[...(S.ajustes.logos||[]),{fileId:up.fileId,nombre:f.name.replace(/\.[^.]+$/,"")}];
+      }
+      await guardarAjustes();
+      toast(fs.length>1?`${fs.length} logotipos agregados a la galería`:"Logotipo agregado a la galería. Elíjalo a la izquierda o a la derecha.");render();
     }catch(err){pr.textContent="No se pudo subir el logotipo: "+(err.mensaje||err.message||err)}
   };
-  if($("#logoVime"))$("#logoVime").onclick=()=>guardarLogo("");
+  c.querySelectorAll("[data-lnom]").forEach(inp=>inp.onchange=async()=>{const l=S.ajustes.logos[+inp.dataset.lnom];if(!l)return;l.nombre=inp.value.trim();await guardarAjustes();render()});
+  c.querySelectorAll("[data-lquitar]").forEach(b=>b.onclick=()=>{const l=S.ajustes.logos[+b.dataset.lquitar];if(!l)return;
+    confirmar("Quitar logotipo",`Se quitará «${l.nombre||"Logotipo"}» de la galería. Los reportes que ya descargó no cambian; el archivo sigue en su Drive.`,async()=>{
+      S.ajustes.logos=S.ajustes.logos.filter(x=>x.fileId!==l.fileId);
+      if(S.ajustes.logoIzq===l.fileId)S.ajustes.logoIzq="gv";
+      await guardarAjustes();
+      const cur=S.sim[s.id];const cambios={};if(selIzq===l.fileId)cambios.logoIzq="gv";if(selDer===l.fileId)cambios.logoDer="";
+      if(Object.keys(cambios).length)await guardar("simulacros",s.id,{...cur,...cambios});
+      const est=S.est[e.id];if(est&&est.logoCliente===l.fileId)await guardar("establecimientos",e.id,{...est,logoCliente:""});
+      toast("Logotipo quitado de la galería");render();
+    },"Quitar")});
   $("#fRep").onsubmit=async ev2=>{ev2.preventDefault();
     const nom=$("#evNom").value.trim();if(!nom){toast("Escriba el nombre de quien evalúa");return}
     lsSet("vime_sim_evaluador",nom);lsSet("vime_sim_cargo",$("#evCargo").value.trim());
-    const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incGuion:$("#incGuion").checked,logoFileId:logoId||""};delete o.id;
+    const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incGuion:$("#incGuion").checked,logoIzq:selIzq,logoDer:selDer};delete o.id;
     const out=$("#repOut");const b=$("#genW");b.disabled=true;trabajando=true;
     try{
       out.textContent="Armando el documento…";
@@ -1022,19 +1066,18 @@ async function generarDocx(s,e,prog){
 
   prog("Cargando logotipos…");
   const sinBorde={top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.NONE},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE}};
-  let celdasEnc;
-  let logoPropio=null;
-  if(s.logoFileId){ try{ const lb=await fotoBlob({fileId:s.logoFileId}); const d=await dimsDe(lb); const r=Math.min(220/d.w,60/d.h); logoPropio={data:new Uint8Array(await lb.arrayBuffer()),w:Math.round(d.w*r),h:Math.round(d.h*r)} }catch(err){ logoPropio=null } }
-  if(logoPropio){
-    celdasEnc=[new TableCell({borders:sinBorde,width:{size:W,type:WidthType.DXA},children:[new Paragraph({children:[new ImageRun({data:logoPropio.data,transformation:{width:logoPropio.w,height:logoPropio.h}})]})]})];
-  } else {
-    const logoGV=await bytesDe("logo_gv.png");const logoAula=await bytesDe("logo_aula.png");
-    celdasEnc=[
-      new TableCell({borders:sinBorde,children:[new Paragraph({children:[new ImageRun({data:logoGV,transformation:{width:170,height:53}})]})]}),
-      new TableCell({borders:sinBorde,verticalAlign:VerticalAlign.CENTER,children:[new Paragraph({alignment:AlignmentType.RIGHT,children:[new ImageRun({data:logoAula,transformation:{width:72,height:55}})]})]})
-    ];
-  }
-  const header=new Header({children:[new Table({width:{size:W,type:WidthType.DXA},columnWidths:logoPropio?[W]:[W/2,W/2],layout:TableLayoutType.FIXED,borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.SINGLE,size:12,color:COL.gold},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
+  const izq=s.logoIzq!==undefined?s.logoIzq:(s.logoFileId||"gv");
+  const der=s.logoDer!==undefined?s.logoDer:(s.logoFileId?"":"aula");
+  const cargarLogo=async(v)=>{
+    if(!v) return null;
+    if(v==="gv") return {data:await bytesDe("logo_gv.png"),w:170,h:53};
+    if(v==="aula") return {data:await bytesDe("logo_aula.png"),w:72,h:55};
+    try{ const lb=await fotoBlob({fileId:v}); const d=await dimsDe(lb); const r=Math.min(210/d.w,60/d.h); return {data:new Uint8Array(await lb.arrayBuffer()),w:Math.round(d.w*r),h:Math.round(d.h*r)} }catch(err){ return null }
+  };
+  const [li,ld]=[await cargarLogo(izq),await cargarLogo(der)];
+  const celdaLogo=(l,alin)=>new TableCell({borders:sinBorde,width:{size:W/2,type:WidthType.DXA},verticalAlign:VerticalAlign.CENTER,children:[new Paragraph({alignment:alin,children:l?[new ImageRun({data:l.data,transformation:{width:l.w,height:l.h}})]:[]})]});
+  const celdasEnc=[celdaLogo(li,AlignmentType.LEFT),celdaLogo(ld,AlignmentType.RIGHT)];
+  const header=new Header({children:[new Table({width:{size:W,type:WidthType.DXA},columnWidths:[W/2,W/2],layout:TableLayoutType.FIXED,borders:{top:{style:BorderStyle.NONE},bottom:{style:BorderStyle.SINGLE,size:12,color:COL.gold},left:{style:BorderStyle.NONE},right:{style:BorderStyle.NONE},insideHorizontal:{style:BorderStyle.NONE},insideVertical:{style:BorderStyle.NONE}},
     rows:[new TableRow({children:celdasEnc})]})]});
   const gp={size:16,color:COL.gray};
   const footer=new Footer({children:[
