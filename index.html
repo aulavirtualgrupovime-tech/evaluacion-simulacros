@@ -230,8 +230,8 @@ footer{color:var(--muted);font-size:.9rem;padding-block:24px;border-top:1px soli
 "use strict";
 /* ===================== Contenido técnico ===================== */
 const PUNTOS = [
- {n:1,t:"Sistema de alertamiento o alarma",c:"Alerta sísmica o alarma audible y/o visible (voz, silbato, sirena, timbre, megáfono). Se percibe en todo el inmueble e inicia la respuesta."},
- {n:2,t:"Evacuación",c:"Total o parcial según lo planeado. Debe tardar menos de 3 minutos; con alerta sísmica, 50 segundos como máximo. Personas dirigidas por rutas de evacuación hacia los puntos de reunión, con orden y sin correr. Rutas de evacuación libres y debidamente señalizadas (incluidos los puntos de reunión)."},
+ {n:1,t:"Sistema de alertamiento o alarma",c:"Alerta sísmica o alarma audible y/o visible (voz, silbato, sirena, timbre, megáfono). Se percibe en todo el inmueble e inicia la respuesta. En amenaza de bomba no se activa la alarma: el aviso de voz en voz entre brigadistas es el alertamiento correcto."},
+ {n:2,t:"Evacuación",c:"Total o parcial según lo planeado. Tiempo recomendado: menos de 3 minutos para cualquier tipo de emergencia y 50 segundos como máximo con alerta sísmica. En amenaza de bomba, como no se activa la alarma y el aviso corre de voz en voz entre brigadistas, la evacuación puede tardar más de 3 minutos sin que se considere deficiencia. Personas dirigidas por rutas de evacuación hacia los puntos de reunión, con orden y sin correr. Rutas de evacuación libres y debidamente señalizadas (incluidos los puntos de reunión)."},
  {n:3,t:"Activación de brigadas",c:"Brigadistas identificados (chaleco, brazalete, casco, gorra). Participación activa y con equipo de respuesta: extintores, botiquín, radio portátil, camilla. Pase de lista de brigadas en instalaciones. No se evalúa el uso de equipo de protección personal."},
  {n:4,t:"Instalaciones",c:"Puesto de Mando, Centro de Triage y Puntos de Reunión, debidamente señalizados. Con SCI: Puesto de Comando (PC), Área de Concentración de Víctimas (ACV) y Área de Espera (AE)."},
  {n:5,t:"Implementación del SCI",c:"Comandante del Incidente identificado, estructura y funciones del Sistema de Comando de Incidentes, terminología SCI, formularios SCI-201, SCI-207 y SCI-211 (NOM-010-SSPC-2019)."},
@@ -267,6 +267,16 @@ function lsGet(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.pa
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function esSismo(sim){return sim.alertaSismica===true}
 function limiteEvac(sim){return esSismo(sim)?50:180}
+function esBomba(sim){return /bomba|artefacto explosivo/i.test(sim.hipotesis||"")}
+function reglaEvac(sim){return esSismo(sim)?"50 segundos como máximo (alerta sísmica)":esBomba(sim)?"3 minutos como referencia; por amenaza de bomba el aviso corre de voz en voz y puede tardar más":"menos de 3 minutos"}
+// Juicio del tiempo medido: en amenaza de bomba superar 3 min no es deficiencia
+function juicioEvac(sim,t){
+  if(t==null) return null;
+  const lim=limiteEvac(sim);
+  if(t<=lim) return {cls:"Bueno",txt:"dentro del tiempo recomendado"};
+  if(esBomba(sim)&&!esSismo(sim)) return {cls:"NA",txt:"supera 3 min; aceptable por amenaza de bomba (aviso de voz en voz)"};
+  return {cls:"Malo",txt:"excede el tiempo recomendado"};
+}
 function parseMMSS(s){if(!s)return null;s=String(s).trim();const m=s.match(/^(\d{1,3}):(\d{1,2})$/);if(m)return (+m[1])*60+(+m[2]);const n=parseFloat(s);return isNaN(n)?null:n}
 function fmtSeg(n){if(n==null)return "—";const m=Math.floor(n/60),s=Math.round(n%60);return m+" min "+String(s).padStart(2,"0")+" s"}
 
@@ -533,7 +543,7 @@ function pasoDatos(c,s,e){
     <fieldset class="field"><legend class="lbl">Tipo de simulacro</legend>${seg("tipo",["De campo","De gabinete"],s.tipo)}</fieldset>
     <div class="field"><label for="hip">Hipótesis</label><input type="text" id="hip" placeholder="Ejemplo: sismo de magnitud 7.2 con lesionado en almacén" value="${esc(s.hipotesis)}">
       <div class="chips">${HIPOTESIS.map(h=>`<button type="button" class="chip" data-h="${esc(h)}">${esc(h)}</button>`).join("")}</div></div>
-    <fieldset class="field"><legend class="lbl">¿El alertamiento es por alerta sísmica?</legend>${seg("alerta",["Sí","No"],s.alertaSismica?"Sí":"No")}<span class="hint">Con alerta sísmica el tiempo máximo de evacuación es de 50 segundos; en los demás casos, menos de 3 minutos.</span></fieldset>
+    <fieldset class="field"><legend class="lbl">¿El alertamiento es por alerta sísmica?</legend>${seg("alerta",["Sí","No"],s.alertaSismica?"Sí":"No")}<span class="hint">Tiempo recomendado de evacuación: 50 segundos como máximo con alerta sísmica y menos de 3 minutos en los demás casos. En amenaza de bomba (sin alarma, aviso de voz en voz) puede tardar más.</span></fieldset>
     <fieldset class="field"><legend class="lbl">Tipo de evacuación</legend>${seg("evac",["Total","Parcial"],s.evacuacion)}</fieldset>
     <fieldset class="field"><legend class="lbl">Programación</legend>${seg("prog",["Con previo aviso","Sin previo aviso"],s.programacion||"Con previo aviso")}</fieldset>
     <div class="field"><label for="guion">Guion y cronología</label><span class="hint">Pegue aquí el guion y la cronología diseñados para el simulacro (minuto a minuto). En simulacros de gabinete es la base principal de la evaluación.</span><textarea class="guion" id="guion" placeholder="11:00 Se escucha la alerta sísmica. El Coordinador General asume el mando…">${esc(s.guion)}</textarea></div>
@@ -550,8 +560,8 @@ function pasoDatos(c,s,e){
   </form>`;
   const f=$("#fSim");
   f.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{$("#hip").value=b.dataset.h;if(/sismo/i.test(b.dataset.h))f.querySelector('input[name=alerta][value="Sí"]').checked=true});
-  const info=()=>{const t=parseMMSS($("#tEv").value);const lim=leerSeg(f,"alerta")==="Sí"?50:180;$("#evacInfo").textContent=t==null?"":(t<=lim?`Tiempo dentro del límite (${fmtSeg(lim)}).`:`Tiempo excede el límite de ${fmtSeg(lim)}.`)};
-  $("#tEv").oninput=info;f.querySelectorAll("input[name=alerta]").forEach(r=>r.onchange=info);info();
+  const info=()=>{const sim={alertaSismica:leerSeg(f,"alerta")==="Sí",hipotesis:$("#hip").value};const j=juicioEvac(sim,parseMMSS($("#tEv").value));$("#evacInfo").textContent=j?`Tiempo ${j.txt} (${reglaEvac(sim)}).`:""};
+  $("#tEv").oninput=info;$("#hip").addEventListener("input",info);f.querySelectorAll("input[name=alerta]").forEach(r=>r.onchange=info);info();
   f.onsubmit=async ev=>{ev.preventDefault();
     const o={...s,numero:$("#num").value.trim(),fechaHora:$("#fh").value,tipo:leerSeg(f,"tipo"),hipotesis:$("#hip").value.trim(),alertaSismica:leerSeg(f,"alerta")==="Sí",evacuacion:leerSeg(f,"evac"),programacion:leerSeg(f,"prog"),guion:$("#guion").value,
       medidos:{tiempoEvac:$("#tEv").value.trim(),poblacion:$("#pob").value,evacuados:$("#evc").value,brigadistas:$("#bri").value,notas:$("#notasEv").value}};
@@ -702,10 +712,11 @@ SIMULACRO
 - Fecha y hora: ${fFecha(s.fechaHora)}
 - Tipo: ${s.tipo}
 - Hipótesis: ${s.hipotesis}
-- Alertamiento por alerta sísmica: ${s.alertaSismica?"Sí (límite de evacuación 50 segundos)":"No (límite de evacuación menor a 3 minutos)"}
+- Alertamiento por alerta sísmica: ${s.alertaSismica?"Sí":"No"}
+- Tiempo de evacuación recomendado: ${reglaEvac(s)}${esBomba(s)?"\n- Amenaza de bomba: no se activa la alarma; el aviso corre de voz en voz entre brigadistas":""}
 - Tipo de evacuación: ${s.evacuacion}
 - Programación: ${s.programacion||"—"}
-${t!=null?`- Tiempo de evacuación medido: ${fmtSeg(t)} (${t<=limiteEvac(s)?"dentro":"fuera"} del límite)\n`:""}${m.poblacion?`- Población en el inmueble: ${m.poblacion}\n`:""}${m.evacuados?`- Personas evacuadas según conteo: ${m.evacuados}\n`:""}${m.brigadistas?`- Brigadistas participantes: ${m.brigadistas}\n`:""}${m.notas?`- Notas del evaluador en sitio: ${m.notas}\n`:""}${(s.videos||[]).filter(v=>v.analizar===false).length?`- Videos registrados que NO se te envían: ${s.videos.filter(v=>v.analizar===false).map(v=>v.desc||"video").join("; ")}\n`:""}
+${t!=null?`- Tiempo de evacuación medido: ${fmtSeg(t)} (${juicioEvac(s,t).txt})\n`:""}${m.poblacion?`- Población en el inmueble: ${m.poblacion}\n`:""}${m.evacuados?`- Personas evacuadas según conteo: ${m.evacuados}\n`:""}${m.brigadistas?`- Brigadistas participantes: ${m.brigadistas}\n`:""}${m.notas?`- Notas del evaluador en sitio: ${m.notas}\n`:""}${(s.videos||[]).filter(v=>v.analizar===false).length?`- Videos registrados que NO se te envían: ${s.videos.filter(v=>v.analizar===false).map(v=>v.desc||"video").join("; ")}\n`:""}
 GUION Y CRONOLOGÍA
 ${(s.guion||"(no se capturó guion)").slice(0,60000)}`;
 }
@@ -716,10 +727,11 @@ function criterios(s,e){
 const MARCO=`Eres evaluador experto en Protección Civil en México (Grupo VIME). Evalúas simulacros conforme a la Ley Estatal de Protección Civil de Morelos y su Reglamento, la NT-SGIRPC-SIM-007-2024 (CDMX), la NOM-002-STPS-2010 y la NOM-010-SSPC-2019 (SCI). Escribe en español de México, en tono profesional, concreto y verificable. Basa cada observación en lo que realmente se ve en las fotos y videos o en lo que dice el guion; no inventes hechos. Cita las fotos por su número (Foto 3) y los videos con su etiqueta y minuto (V1 min 02:15). En los videos puedes medir tiempos: por ejemplo, desde que suena la alarma hasta que la última persona llega al punto de reunión. Si un punto no tiene evidencia suficiente, dilo y califica "Malo" con confianza "baja", explicando que no hay evidencia.
 
 REGLAS OBLIGATORIAS DE EVALUACIÓN
-1. NO compares los horarios del guion y la cronología con las horas o tiempos que aparecen en fotos y videos, y no penalices diferencias entre ellos. El guion es una planeación; el simulacro muestra el tiempo real, que sirve para mejorar. Sí aplica el límite del tiempo de evacuación (menos de 3 minutos, o 50 segundos con alerta sísmica).
+1. NO compares los horarios del guion y la cronología con las horas o tiempos que aparecen en fotos y videos, y no penalices diferencias entre ellos. El guion es una planeación; el simulacro muestra el tiempo real, que sirve para mejorar. Sí aplica el tiempo recomendado de evacuación: menos de 3 minutos para cualquier emergencia y 50 segundos como máximo con alerta sísmica.
 2. El personal NO debe portar equipo de protección personal (EPP): no lo evalúes, no lo menciones como deficiencia y no lo recomiendes.
 3. Nunca escribas "personal directivo"; usa siempre "personal brigadista".
-4. La llegada de apoyo externo (bomberos, ambulancias, Cruz Roja, SEDENA, policía, etc.) mencionada en el guion es simulada: no evalúes su llegada real. Evalúa solo que se registre la llamada de auxilio.`;
+4. La llegada de apoyo externo (bomberos, ambulancias, Cruz Roja, SEDENA, policía, etc.) mencionada en el guion es simulada: no evalúes su llegada real. Evalúa solo que se registre la llamada de auxilio.
+5. En amenaza de bomba no se activa la alarma y el aviso corre de voz en voz entre brigadistas: considera correcto ese alertamiento y no penalices que la evacuación tarde más de 3 minutos; evalúa que sea ordenada, completa y discreta.`;
 
 function listaEvidencias(fotos,videos,desde=1){
   const l=[];
@@ -886,8 +898,8 @@ function pasoEvaluacion(c,s,e){
   <div class="ai">
     <h3>Análisis con inteligencia artificial (Gemini)</h3>
     <p class="note">${gab?`Se revisará si el guion y la cronología describen los 10 puntos, y se verificarán en ${(s.fotos||[]).length} foto(s) las 4 actividades de gabinete.`:`Se revisarán ${(s.fotos||[]).length} fotografía(s) y ${(s.videos||[]).filter(v=>v.analizar!==false).length} video(s) de Drive junto con el guion, la hipótesis y los datos medidos.`} El resultado es una propuesta: usted la revisa, ajusta y firma como evaluador.</p>
-    ${t!=null&&!gab?`<div class="timebox"><span class="cal ${t<=limiteEvac(s)?"Bueno":"Malo"}">Evacuación: ${fmtSeg(t)}</span><span class="note">Límite: ${fmtSeg(limiteEvac(s))}${esSismo(s)?" (alerta sísmica)":""}</span></div>`:""}
-    ${ev?.tiempoVideo&&!gab?`<p class="note">Tiempo de evacuación observado por Gemini en video: <strong>${esc(ev.tiempoVideo)}</strong> (límite ${fmtSeg(limiteEvac(s))}).</p>`:""}
+    ${t!=null&&!gab?`<div class="timebox"><span class="cal ${juicioEvac(s,t).cls}">Evacuación: ${fmtSeg(t)}</span><span class="note">${esc(juicioEvac(s,t).txt)} · Recomendado: ${esc(reglaEvac(s))}</span></div>`:""}
+    ${ev?.tiempoVideo&&!gab?`<p class="note">Tiempo de evacuación observado por Gemini en video: <strong>${esc(ev.tiempoVideo)}</strong> (recomendado: ${esc(reglaEvac(s))}).</p>`:""}
     <div class="row"><button class="btn orange" id="btnIA">${ev?.origen==="ia"?"Volver a analizar":"Analizar evidencias"}</button>${!ev?'<button class="btn alt" id="btnManual">Evaluar manualmente</button>':""}</div>
     <div id="iaOut"></div>
     ${ev?.origen==="ia"&&ev.fechaIA?`<p class="note">Último análisis: ${fFecha(ev.fechaIA)}${ev.modelo?" con "+esc(ev.modelo):""}. Volver a analizar reemplaza calificaciones y textos.</p>`:""}
@@ -1097,8 +1109,8 @@ async function generarDocx(s,e,prog){
   // 2. Datos del simulacro
   body.push(H("2. Datos del simulacro"));
   const m=s.medidos||{};const t=parseMMSS(m.tiempoEvac);
-  const filasSim=[["Número de simulacro",s.numero],["Fecha y hora",fFecha(s.fechaHora)],["Tipo de simulacro",s.tipo],["Hipótesis",s.hipotesis],["Alertamiento",s.alertaSismica?"Alerta sísmica (tiempo máximo de evacuación: 50 segundos)":"Alarma (tiempo de evacuación menor a 3 minutos)"],["Tipo de evacuación",s.evacuacion],["Programación",s.programacion]];
-  if(t!=null)filasSim.push(["Tiempo de evacuación medido",`${fmtSeg(t)} · ${t<=limiteEvac(s)?"dentro del límite":"excede el límite"} de ${fmtSeg(limiteEvac(s))}`]);
+  const filasSim=[["Número de simulacro",s.numero],["Fecha y hora",fFecha(s.fechaHora)],["Tipo de simulacro",s.tipo],["Hipótesis",s.hipotesis],["Alertamiento",s.alertaSismica?"Alerta sísmica":esBomba(s)?"Aviso de voz en voz entre brigadistas (amenaza de bomba, sin alarma)":"Alarma"],["Tiempo de evacuación recomendado",reglaEvac(s).replace(/^./,c=>c.toUpperCase())],["Tipo de evacuación",s.evacuacion],["Programación",s.programacion]];
+  if(t!=null)filasSim.push(["Tiempo de evacuación medido",`${fmtSeg(t)} · ${juicioEvac(s,t).txt}`]);
   if(m.poblacion)filasSim.push(["Población en el inmueble",m.poblacion]);
   if(m.evacuados)filasSim.push(["Personas evacuadas (conteo)",m.evacuados]);
   if(m.brigadistas)filasSim.push(["Brigadistas participantes",m.brigadistas]);
