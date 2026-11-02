@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Instalar mi servidor · Evaluación de Simulacros VIME</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="logo_aula.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600&display=swap">
+<style>
+/* Guía de un solo hilo: banda corporativa, luego pasos numerados (el orden importa). */
+:root{
+  --navy:#17325c; --navy-2:#24508f; --orange:#e2711d; --gold:#f0a81c;
+  --ink:#1b2533; --muted:#536072; --bg:#f2f4f8; --card:#ffffff; --soft:#e9eef6; --line:#d3dbe7;
+  --ok:#1d7a4c; --ok-bg:#e3f4ea; --warn:#9a6206; --warn-bg:#fdf1d8;
+  --f-brand:'Atkinson Hyperlegible','Segoe UI',Arial,sans-serif; --f-body:'Lexend','Segoe UI',Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --navy:#9fc0f0; --navy-2:#7fa8e6; --orange:#f39a52; --gold:#f5c04f;
+  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0f1622; --card:#172131; --soft:#1e2b3f; --line:#2c3a50;
+  --ok:#6fd39e; --ok-bg:#15352a; --warn:#f2c260; --warn-bg:#3a2f12; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.65}
+h1,h2,h3{font-family:var(--f-brand);font-weight:700;line-height:1.25;margin:0;text-wrap:balance}
+a{color:var(--navy-2)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:900px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{background:var(--card);border-bottom:1px solid var(--line)}
+.brand .wrap{display:flex;align-items:center;gap:18px;padding-block:14px;flex-wrap:wrap}
+.plaque{background:#fff;border-radius:10px;padding:6px 10px}
+.plaque img{display:block;height:56px;width:auto}
+.brand h1{color:var(--navy);font-size:clamp(1.4rem,3vw,1.9rem)}
+.brand p{margin:0;color:var(--muted);font-size:1rem}
+.swoosh{height:5px;background:linear-gradient(90deg,var(--orange),var(--gold) 55%,transparent)}
+main{padding-block:24px 56px;display:grid;gap:22px}
+.intro{display:grid;gap:10px}
+.intro h2{color:var(--navy);font-size:1.6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}
+ol.pasos{list-style:none;margin:0;padding:0;display:grid;gap:18px;counter-reset:p}
+ol.pasos>li{counter-increment:p;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px 20px 74px;position:relative}
+ol.pasos>li::before{content:counter(p);position:absolute;left:20px;top:18px;width:38px;height:38px;border-radius:50%;background:var(--navy);color:var(--card);display:grid;place-items:center;font-family:var(--f-brand);font-weight:700;font-size:1.15rem}
+ol.pasos h3{color:var(--navy);font-size:1.25rem;margin-bottom:6px}
+ol.pasos ul,ol.pasos ol{margin:6px 0 0;padding-left:1.2em;display:grid;gap:4px}
+table{border-collapse:collapse;width:100%;font-size:1rem;margin-top:8px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--soft);color:var(--navy)}
+code{font-family:Consolas,'Courier New',monospace;background:var(--soft);padding:1px 6px;border-radius:5px;font-size:.95em;overflow-wrap:anywhere}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:8px 18px;border-radius:10px;border:2px solid var(--navy);background:var(--navy);color:var(--card);font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.alt{background:transparent;color:var(--navy)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px}
+.nota{border-radius:10px;padding:12px 16px;font-size:1rem}
+.nota.warn{background:var(--warn-bg);border:1px solid var(--warn)}
+.nota.ok{background:var(--ok-bg);border:1px solid var(--ok)}
+.estado{font-size:.95rem;color:var(--muted)}
+.tbl{overflow-x:auto}
+footer{color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);padding-block:20px}
+@media (max-width:560px){ol.pasos>li{padding-left:22px;padding-top:66px}}
+</style>
+</head>
+<body>
+<header class="brand">
+  <div class="wrap">
+    <div class="plaque"><img src="logo_gv.png" alt="Grupo VIME · Asesoría Corporativa Integral"></div>
+    <div style="flex:1;min-width:220px"><h1>Instalar mi servidor</h1><p>Evaluación de Simulacros VIME · se hace una sola vez, unos 15 minutos</p></div>
+  </div>
+  <div class="swoosh"></div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <h2>Cómo funciona</h2>
+    <p>La app es la misma para todos, pero <strong>cada usuario trabaja con su propio servidor</strong>, gratuito, dentro de su cuenta de Google:</p>
+    <ul style="margin:0;padding-left:1.2em;display:grid;gap:4px">
+      <li>Sus establecimientos y simulacros se guardan en una hoja de cálculo de <strong>su</strong> Google Drive.</li>
+      <li>Sus fotos y logotipos, en una carpeta de <strong>su</strong> Drive.</li>
+      <li>El análisis con inteligencia artificial usa <strong>su</strong> clave gratuita de Gemini.</li>
+    </ul>
+    <p>Nadie más ve sus datos. Necesita una cuenta de Google (Gmail o de su empresa) y una computadora; el celular solo sirve para usar la app después.</p>
+  </section>
+
+  <ol class="pasos">
+    <li>
+      <h3>Saque su clave gratuita de Gemini</h3>
+      <ul>
+        <li>Entre a <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> con su cuenta de Google.</li>
+        <li>Pulse <strong>Create API key</strong> (Crear clave de API) y cópiela. Suele empezar con <code>AIza</code>.</li>
+        <li>Guárdela por ahora en un lugar seguro y no la comparta.</li>
+      </ul>
+      <p class="nota warn" style="margin-top:10px">El plan gratuito tiene un límite diario de consultas (cada evaluación usa una). En el plan gratuito Google puede usar lo que se envía, como fotos y textos, para mejorar sus productos.</p>
+    </li>
+
+    <li>
+      <h3>Cree el proyecto en Google Apps Script</h3>
+      <ol>
+        <li>Entre a <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> y pulse <strong>Nuevo proyecto</strong>.</li>
+        <li>Arriba a la izquierda, cambie el nombre a <strong>Evaluación de Simulacros VIME</strong>.</li>
+        <li>Borre todo el texto del archivo <code>Código.gs</code>.</li>
+        <li>Copie el código del servidor con este botón y péguelo en <code>Código.gs</code>.</li>
+        <li>Pulse <strong>Guardar</strong> (ícono de disco).</li>
+      </ol>
+      <div class="row">
+        <button class="btn" id="copiar">Copiar el código del servidor</button>
+        <a class="btn alt" href="servidor/Codigo.gs.txt" target="_blank" rel="noopener">Ver el código</a>
+        <span class="estado" id="estado"></span>
+      </div>
+      <p class="nota warn" style="margin-top:12px">Si ya tiene otros proyectos de Apps Script, use uno <strong>nuevo</strong>; no pegue este código en un proyecto existente.</p>
+    </li>
+
+    <li>
+      <h3>Ponga su clave de acceso y la clave de Gemini</h3>
+      <p>En el menú de la izquierda pulse el engrane <strong>Configuración del proyecto</strong>. Abajo, en <strong>Propiedades del script</strong>, pulse <strong>Agregar propiedad del script</strong> y agregue estas dos:</p>
+      <div class="tbl"><table>
+        <tr><th>Propiedad</th><th>Valor</th></tr>
+        <tr><td><code>CLAVE_ACCESO</code></td><td>Una clave que usted invente para entrar a la app. Use una frase de 10 caracteres o más que no use en otros sitios.</td></tr>
+        <tr><td><code>GEMINI_API_KEY</code></td><td>La clave de Gemini del paso 1.</td></tr>
+      </table></div>
+      <p>Escriba los nombres exactamente así: mayúsculas, guion bajo y sin espacios. Pulse <strong>Guardar propiedades del script</strong>.</p>
+    </li>
+
+    <li>
+      <h3>Autorice y pruebe</h3>
+      <ol>
+        <li>Regrese al editor (ícono <code>&lt; &gt;</code>).</li>
+        <li>En la barra de arriba elija la función <strong>instalar</strong> y pulse <strong>Ejecutar</strong>.</li>
+        <li>Google pedirá permisos: <strong>Revisar permisos</strong> → elija su cuenta → <strong>Configuración avanzada</strong> → <strong>Ir a Evaluación de Simulacros VIME (no seguro)</strong> → <strong>Permitir</strong>. El aviso aparece porque el script es suyo y Google no lo ha verificado; es normal.</li>
+        <li>En el <strong>Registro de ejecución</strong> deben aparecer los enlaces de su hoja y de su carpeta de fotos, <code>CLAVE_ACCESO: configurada</code> y <code>Gemini (…): listo</code>.</li>
+      </ol>
+    </li>
+
+    <li>
+      <h3>Publíquelo como aplicación web</h3>
+      <ol>
+        <li>Pulse <strong>Implementar</strong> → <strong>Nueva implementación</strong>.</li>
+        <li>En el engrane de <strong>Seleccionar tipo</strong> elija <strong>Aplicación web</strong>.</li>
+        <li><strong>Ejecutar como:</strong> Yo (su cuenta). <strong>Quién tiene acceso:</strong> Cualquier usuario.</li>
+        <li>Pulse <strong>Implementar</strong> y copie la <strong>URL de la aplicación web</strong> (termina en <code>/exec</code>).</li>
+      </ol>
+      <p class="nota ok" style="margin-top:10px">«Cualquier usuario» es necesario para que la app se conecte desde cualquier navegador. Sus datos siguen protegidos: sin su clave de acceso, el servidor no entrega nada.</p>
+    </li>
+
+    <li>
+      <h3>Entre a la app y guarde su enlace personal</h3>
+      <ol>
+        <li>Abra la <a href="./">app Evaluación de Simulacros</a>.</li>
+        <li>Pegue la URL <code>/exec</code> del paso 5, escriba su clave de acceso y pulse <strong>Entrar</strong>.</li>
+        <li>Pulse <strong>Mi enlace</strong>, arriba a la derecha, y guárdelo en favoritos. Con ese enlace, en cualquier equipo o celular, la app solo le pedirá su clave.</li>
+      </ol>
+    </li>
+  </ol>
+
+  <section class="card" style="display:grid;gap:8px">
+    <h2 style="color:var(--navy);font-size:1.3rem">Preguntas frecuentes</h2>
+    <p><strong>¿Cuesta algo?</strong> No. Google Apps Script, Drive y el plan gratuito de Gemini no tienen costo dentro de sus límites.</p>
+    <p><strong>¿Dónde quedan mis datos?</strong> En su Google Drive: la hoja «Evaluación de Simulacros VIME · Datos» y la carpeta «Evaluación de Simulacros VIME · Fotos». Puede descargar la hoja como Excel cuando quiera.</p>
+    <p><strong>¿Cómo cambio mi clave de acceso?</strong> Edite <code>CLAVE_ACCESO</code> en Propiedades del script. No hace falta volver a implementar.</p>
+    <p><strong>Me avisaron que hay una versión nueva del servidor.</strong> Pegue el código nuevo en <code>Código.gs</code> y guarde. Luego vaya a <strong>Implementar → Administrar implementaciones →</strong> lápiz (editar) <strong>→ Versión: Nueva versión → Implementar</strong>. Así su URL <code>/exec</code> no cambia.</p>
+  </section>
+</main>
+<footer><div class="wrap">Grupo VIME · Asesoría Corporativa Integral · Aula Virtual Grupo VIME · www.aulavirtualgrupovime.com</div></footer>
+
+<script>
+document.getElementById("copiar").onclick=async()=>{
+  const est=document.getElementById("estado");
+  try{
+    const r=await fetch("servidor/Codigo.gs.txt",{cache:"no-store"});
+    if(!r.ok) throw new Error("no se pudo leer el código");
+    const t=await r.text();
+    await navigator.clipboard.writeText(t);
+    est.textContent="Código copiado ("+t.split("\n").length+" líneas). Péguelo en Código.gs.";
+  }catch(e){
+    est.textContent="No se pudo copiar automáticamente. Abra «Ver el código», selecciónelo todo (Ctrl+A) y cópielo (Ctrl+C).";
+  }
+};
+</script>
+</body>
+</html>
