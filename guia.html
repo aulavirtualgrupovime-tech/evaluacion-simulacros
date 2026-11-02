@@ -12,15 +12,17 @@
 <style>
 /* Guía de un solo hilo: banda corporativa, luego pasos numerados (el orden importa). */
 :root{
-  --navy:#17325c; --navy-2:#24508f; --orange:#e2711d; --gold:#f0a81c;
-  --ink:#1b2533; --muted:#536072; --bg:#f2f4f8; --card:#ffffff; --soft:#e9eef6; --line:#d3dbe7;
+  --navy:#0F4478; --navy-2:#136CA8; --orange:#EA7001; --gold:#F5B800;
+  --ink:#1B2433; --muted:#5B6676; --bg:#F4F6F9; --card:#ffffff; --soft:#E8EFF7; --line:#DCE3EB;
+  --band-a:#0C3B6F; --band-b:#0F4478; --band-c:#136CA8; --on-band:#ffffff; --on-band-2:#d9e6f5;
   --ok:#1d7a4c; --ok-bg:#e3f4ea; --warn:#9a6206; --warn-bg:#fdf1d8;
   --f-brand:'Atkinson Hyperlegible','Segoe UI',Arial,sans-serif; --f-body:'Lexend','Segoe UI',Arial,sans-serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
-  --navy:#9fc0f0; --navy-2:#7fa8e6; --orange:#f39a52; --gold:#f5c04f;
-  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0f1622; --card:#172131; --soft:#1e2b3f; --line:#2c3a50;
+  --navy:#9cc3ee; --navy-2:#7fb2e6; --orange:#F59002; --gold:#F5B800;
+  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0d1520; --card:#15202f; --soft:#1b2b40; --line:#2a3a50;
+  --band-a:#081f3b; --band-b:#0C3B6F; --band-c:#0f5a92;
   --ok:#6fd39e; --ok-bg:#15352a; --warn:#f2c260; --warn-bg:#3a2f12; color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -29,13 +31,15 @@ h1,h2,h3{font-family:var(--f-brand);font-weight:700;line-height:1.25;margin:0;te
 a{color:var(--navy-2)}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .wrap{max-width:900px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.brand{background:var(--card);border-bottom:1px solid var(--line)}
+.brand{background:linear-gradient(90deg,var(--band-a),var(--band-b) 55%,var(--band-c));color:var(--on-band)}
 .brand .wrap{display:flex;align-items:center;gap:18px;padding-block:14px;flex-wrap:wrap}
-.plaque{background:#fff;border-radius:10px;padding:6px 10px}
-.plaque img{display:block;height:56px;width:auto}
-.brand h1{color:var(--navy);font-size:clamp(1.4rem,3vw,1.9rem)}
-.brand p{margin:0;color:var(--muted);font-size:1rem}
-.swoosh{height:5px;background:linear-gradient(90deg,var(--orange),var(--gold) 55%,transparent)}
+.tile{flex:none;width:72px;height:72px;border-radius:14px;background:#fff;display:grid;place-items:center}
+.tile img{display:block;width:62px;height:62px;object-fit:contain}
+.plaque{background:#fff;border-radius:12px;padding:6px 12px}
+.plaque img{display:block;height:50px;width:auto}
+.brand h1{color:var(--on-band);font-size:clamp(1.4rem,3vw,1.9rem)}
+.brand p{margin:0;color:var(--on-band-2);font-size:1rem}
+.swoosh{height:6px;background:linear-gradient(90deg,var(--orange),var(--gold) 60%,var(--band-c))}
 main{padding-block:24px 56px;display:grid;gap:22px}
 .intro{display:grid;gap:10px}
 .intro h2{color:var(--navy);font-size:1.6rem}
@@ -64,11 +68,12 @@ footer{color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);paddi
 <body>
 <header class="brand">
   <div class="wrap">
-    <div class="plaque"><img src="logo_gv.png" alt="Grupo VIME · Asesoría Corporativa Integral"></div>
+    <div class="tile"><img src="logo_aula.png" alt="Aula Virtual Grupo VIME"></div>
     <div style="flex:1;min-width:220px"><h1>Instalar mi servidor</h1><p>Evaluación de Simulacros VIME · se hace una sola vez, unos 15 minutos</p></div>
+    <div class="plaque"><img src="logo_gv.png" alt="Grupo VIME · Asesoría Corporativa Integral"></div>
   </div>
-  <div class="swoosh"></div>
 </header>
+<div class="swoosh"></div>
 
 <main class="wrap">
   <section class="intro">

@@ -13,9 +13,10 @@
 <style>
 /* Layout: banda corporativa con logotipos → migas → espacio de trabajo en tarjetas; un simulacro se trabaja en 4 pasos (Datos · Evidencias · Evaluación · Reporte). */
 :root{
-  --navy:#17325c; --navy-2:#24508f; --orange:#e2711d; --gold:#f0a81c; --silver:#6d6f73;
-  --ink:#1b2533; --muted:#536072; --bg:#f2f4f8; --card:#ffffff; --soft:#e9eef6; --line:#d3dbe7;
+  --navy:#0F4478; --navy-2:#136CA8; --orange:#EA7001; --gold:#F5B800; --silver:#6d6f73;
+  --ink:#1B2433; --muted:#5B6676; --bg:#F4F6F9; --card:#ffffff; --soft:#E8EFF7; --line:#DCE3EB;
   --on-navy:#ffffff;
+  --band-a:#0C3B6F; --band-b:#0F4478; --band-c:#136CA8; --on-band:#ffffff; --on-band-2:#d9e6f5;
   --good:#1d7a4c; --good-bg:#e3f4ea; --reg:#9a6206; --reg-bg:#fdf1d8; --bad:#b42318; --bad-bg:#fbe5e2; --na:#5d6470; --na-bg:#eceef1;
   --f-brand:'Atkinson Hyperlegible','Segoe UI',Arial,sans-serif;
   --f-body:'Lexend','Segoe UI',Arial,sans-serif;
@@ -23,15 +24,17 @@
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --navy:#9fc0f0; --navy-2:#7fa8e6; --orange:#f39a52; --gold:#f5c04f; --silver:#b9bcc2;
-  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0f1622; --card:#172131; --soft:#1e2b3f; --line:#2c3a50;
-  --on-navy:#0f1622;
+  --navy:#9cc3ee; --navy-2:#7fb2e6; --orange:#F59002; --gold:#F5B800; --silver:#b9bcc2;
+  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0d1520; --card:#15202f; --soft:#1b2b40; --line:#2a3a50;
+  --on-navy:#0d1520;
+  --band-a:#081f3b; --band-b:#0C3B6F; --band-c:#0f5a92; --on-band:#ffffff; --on-band-2:#c9d8ea;
   --good:#6fd39e; --good-bg:#15352a; --reg:#f2c260; --reg-bg:#3a2f12; --bad:#ff8a7c; --bad-bg:#3d1c19; --na:#b3b9c3; --na-bg:#262f3d;
   color-scheme:dark}}
 :root[data-theme="dark"]{
-  --navy:#9fc0f0; --navy-2:#7fa8e6; --orange:#f39a52; --gold:#f5c04f; --silver:#b9bcc2;
-  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0f1622; --card:#172131; --soft:#1e2b3f; --line:#2c3a50;
-  --on-navy:#0f1622;
+  --navy:#9cc3ee; --navy-2:#7fb2e6; --orange:#F59002; --gold:#F5B800; --silver:#b9bcc2;
+  --ink:#e7ecf3; --muted:#a8b3c3; --bg:#0d1520; --card:#15202f; --soft:#1b2b40; --line:#2a3a50;
+  --on-navy:#0d1520;
+  --band-a:#081f3b; --band-b:#0C3B6F; --band-c:#0f5a92; --on-band:#ffffff; --on-band-2:#c9d8ea;
   --good:#6fd39e; --good-bg:#15352a; --reg:#f2c260; --reg-bg:#3a2f12; --bad:#ff8a7c; --bad-bg:#3d1c19; --na:#b3b9c3; --na-bg:#262f3d;
   color-scheme:dark}
 *{box-sizing:border-box}
@@ -48,15 +51,20 @@ a{color:var(--navy-2)}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
 /* Banda corporativa */
-.brand{background:var(--card);border-bottom:1px solid var(--line)}
-.brand .wrap{display:flex;align-items:center;gap:20px;padding-block:14px;flex-wrap:wrap}
-.plaque{background:#fff;border-radius:10px;padding:6px 10px;display:flex;align-items:center}
-.plaque img{display:block;height:64px;width:auto}
-.plaque.aula img{height:58px}
-.brand-title{flex:1;min-width:220px}
-.brand-title h1{font-size:clamp(1.6rem,3.4vw,2.25rem);color:var(--navy);letter-spacing:.3px}
-.brand-title p{color:var(--muted);font-size:1rem}
-.swoosh{height:5px;background:linear-gradient(90deg,var(--orange),var(--gold) 55%,transparent)}
+/* Banda del Aula Virtual Grupo VIME: azul institucional, logotipo del Aula a la izquierda y el de Grupo VIME a la derecha */
+.brand{background:linear-gradient(90deg,var(--band-a),var(--band-b) 55%,var(--band-c));color:var(--on-band)}
+.brand .wrap{display:flex;align-items:center;gap:18px;padding-block:14px;flex-wrap:wrap}
+.tile{flex:none;width:84px;height:84px;border-radius:16px;background:#fff;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.tile img{display:block;width:74px;height:74px;object-fit:contain}
+.plaque{background:#fff;border-radius:12px;padding:6px 12px;display:flex;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.plaque img{display:block;height:58px;width:auto}
+.brand-title{flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px}
+.brand-title .kicker{font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;color:var(--on-band-2);font-weight:600}
+.brand-title .kicker b{color:var(--gold);font-weight:700}
+.brand-title h1{font-size:clamp(1.6rem,3.4vw,2.25rem);color:var(--on-band);letter-spacing:.3px}
+.brand-title p{color:var(--on-band-2);font-size:1rem}
+.swoosh{height:6px;background:linear-gradient(90deg,var(--orange),var(--gold) 60%,var(--band-c))}
+@media (max-width:620px){.tile{width:64px;height:64px;border-radius:12px}.tile img{width:56px;height:56px}.plaque img{height:44px}}
 
 .statusbar{font-size:.92rem;color:var(--muted);padding-block:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 12px;font-size:.88rem;font-weight:500;border:1px solid var(--line);background:var(--card)}
@@ -204,25 +212,27 @@ table.list tr.click:hover td{background:var(--soft)}
 .modal .card{width:100%;max-width:720px;display:grid;gap:18px}
 .modal h3{font-size:1.4rem;color:var(--navy)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:10px;font-weight:500;z-index:60;max-width:calc(100% - 32px)}
-footer{color:var(--muted);font-size:.9rem;padding-block:24px;border-top:1px solid var(--line)}
+footer{background:var(--band-b);color:var(--on-band-2);font-size:.9rem;padding-block:22px;border-top:4px solid var(--gold)}
+footer b{color:var(--on-band)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <header class="brand">
   <div class="wrap">
-    <div class="plaque"><img src="logo_gv.png" alt="Grupo VIME · Asesoría Corporativa Integral"></div>
+    <div class="tile"><img src="logo_aula.png" alt="Aula Virtual Grupo VIME"></div>
     <div class="brand-title">
+      <span class="kicker">Aula Virtual <b>Grupo VIME</b></span>
       <h1>Evaluación de Simulacros</h1>
       <p>Protección Civil · Simulacros de campo y de gabinete</p>
     </div>
-    <div class="plaque aula"><img src="logo_aula.png" alt="Aula Virtual Grupo VIME"></div>
+    <div class="plaque"><img src="logo_gv.png" alt="Grupo VIME · Asesoría Corporativa Integral"></div>
   </div>
-  <div class="swoosh"></div>
 </header>
+<div class="swoosh"></div>
 <div class="wrap statusbar" id="status"><span class="pill">Conectando con su almacenamiento en línea…</span></div>
 <main class="wrap" id="app"></main>
-<footer><div class="wrap">Grupo VIME · Asesoría Corporativa Integral · Aula Virtual Grupo VIME · www.aulavirtualgrupovime.com · contacto@grupovimeconsultoria.com</div></footer>
+<footer><div class="wrap"><b>Aula Virtual Grupo VIME</b> · Grupo VIME · Asesoría Corporativa Integral · www.aulavirtualgrupovime.com · contacto@grupovimeconsultoria.com</div></footer>
 <div id="layer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
