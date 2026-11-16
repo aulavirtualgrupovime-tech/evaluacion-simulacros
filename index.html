@@ -148,7 +148,13 @@ legend{padding:0;margin-bottom:6px}
 .thumb .src{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:0 8px;font-size:.78rem}
 .thumb .body{padding:8px;display:flex;flex-direction:column;gap:6px}
 .thumb input{min-height:40px;font-size:.9rem;padding:6px 10px}
-.thumb .x{align-self:flex-end;background:none;border:0;color:var(--bad);cursor:pointer;font-size:.88rem;text-decoration:underline}
+.thumb[draggable=true]{cursor:grab}
+.thumb.arr{opacity:.45}
+.thumb.sobre{outline:3px solid var(--orange);outline-offset:2px}
+.thumb .orden{display:flex;gap:6px;align-items:center}
+.thumb .orden button{min-width:40px;min-height:36px;border:1px solid var(--line);background:var(--soft);border-radius:8px;cursor:pointer;font-weight:700;color:var(--navy)}
+.thumb .orden button:disabled{opacity:.35;cursor:default}
+.thumb .x{margin-left:auto;background:none;border:0;color:var(--bad);cursor:pointer;font-size:.88rem;text-decoration:underline}
 .drop{border:2px dashed var(--navy-2);border-radius:var(--r);padding:26px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;background:color-mix(in srgb,var(--soft) 60%,transparent)}
 .drop.over{background:var(--soft)}
 .vlist{display:flex;flex-direction:column;gap:10px}
@@ -442,8 +448,15 @@ let pendienteRender=false;
 function renderSoft(){if(editando||trabajando){pendienteRender=true;return}render()}
 let trabajando=false;
 
+let pegarFotos=null;
+document.addEventListener("paste",ev=>{
+  if(!$("#drop")||!pegarFotos)return;
+  const fs=[...(ev.clipboardData?.items||[])].filter(it=>it.kind==="file"&&/^image\//.test(it.type)).map(it=>it.getAsFile()).filter(Boolean);
+  if(!fs.length)return;
+  ev.preventDefault();pegarFotos(fs);
+});
 function render(){
-  const app=$("#app");
+  const app=$("#app");pegarFotos=null;
   if(!S.ready) return;
   if(V.v==="est"&&S.est[V.id]) vistaEst(app,S.est[V.id]);
   else if(V.v==="sim"&&S.sim[V.id]&&S.est[S.sim[V.id].estId]) vistaSim(app,S.sim[V.id]);
@@ -641,6 +654,38 @@ async function agregarFotos(s,items){
   const o={...S.sim[s.id],fotos};delete o.id;
   await guardar("simulacros",s.id,o);render();
 }
+// Cambia el orden (o quita fotos) y ajusta los números «Foto N» citados en la evaluación
+async function guardarOrdenFotos(simId,nuevas,extra={}){
+  const cur=S.sim[simId];const antes=cur.fotos||[];
+  const ev=extra.evaluacion||cur.evaluacion;
+  const nuevoNum=new Map(nuevas.map((f,i)=>[f.id,i+1]));
+  const mapa=n=>{const f=antes[n-1];return f?nuevoNum.get(f.id):undefined};
+  const o={...cur,...extra,fotos:nuevas};delete o.id;
+  // También los textos que citan «Foto 3» o «Fotos 2 y 5»
+  const txt=t=>String(t||"").replace(/\b(Fotos?)(\s+)(\d+(?:\s*(?:,|y|e)\s*\d+)*)/g,(m,pal,esp,nums)=>pal+esp+nums.replace(/\d+/g,n=>mapa(+n)||n));
+  if(ev&&Array.isArray(ev.puntos))o.evaluacion={...ev,resumen:txt(ev.resumen),recomendaciones:(ev.recomendaciones||[]).map(txt),
+    actividades:(ev.actividades||[]).map(a=>({...a,obs:txt(a.obs)})),
+    puntos:ev.puntos.map(p=>({...p,obs:txt(p.obs),rec:txt(p.rec),fotos:(p.fotos||[]).map(mapa).filter(Boolean).sort((a,b)=>a-b)}))};
+  await guardar("simulacros",simId,o);
+}
+// Orden cronológico según el guion: usa el renglón que identificó la IA o, si no hay,
+// el renglón del guion que más se parece a la actividad o nota de la foto.
+function ordenCronologico(fotos,guion){
+  const ren=renglonesGuion(guion);if(!ren.length||!fotos.length)return fotos.slice();
+  const VAC=new Set("para como entre desde hasta sobre donde cuando este esta estos estas todo toda todos todas cada pero porque tambien inicia inicio realiza realizan realizo".split(" "));
+  const pal=t=>new Set(String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9ñ ]+/g," ").split(/\s+/).filter(w=>w.length>3&&!VAC.has(w)));
+  const pr=ren.map(pal);
+  const clave=f=>{
+    if(+f.renglon>0&&+f.renglon<=ren.length)return +f.renglon;
+    const w=pal(f.actividad||f.nota);if(!w.size)return null;
+    let mejor=null,pts=0;pr.forEach((r,i)=>{let k=0;w.forEach(x=>{if(r.has(x))k++});if(k>pts){pts=k;mejor=i+1}});
+    return pts>=1?mejor:null;
+  };
+  // Las fotos sin actividad identificable se quedan junto a la foto que tenían antes
+  let prev=0;
+  const conClave=fotos.map((f,i)=>{let k=clave(f);if(k==null)k=prev;else prev=k;return {f,k,i}});
+  return conClave.sort((a,b)=>a.k-b.k||a.i-b.i).map(x=>x.f);
+}
 function pasoEvidencias(c,s,e){
   const gab=s.tipo==="De gabinete";
   c.innerHTML=`
@@ -648,10 +693,11 @@ function pasoEvidencias(c,s,e){
   ${gab?`<div class="alert ${s.guion?"ok":"warn"}">Simulacro de gabinete: la evaluación revisa si el guion y la cronología describen los 10 puntos, y verifica en las fotos o el video las actividades de gabinete (pase de lista, lectura del guion, debate y llenado de formatos). ${s.guion?"Guion capturado ("+s.guion.length.toLocaleString("es-MX")+" caracteres).":"Aún no hay guion capturado: agréguelo en el Paso 1."}</div>`:""}
   <div class="card grid" style="gap:16px">
     <h3 style="color:var(--navy);font-size:1.25rem">Fotografías del simulacro</h3>
-    <div class="drop" id="drop"><strong>Arrastre aquí las fotos o selecciónelas</strong><span class="note">JPG, PNG o WebP. Se optimizan automáticamente. En cada foto, la nota es para usted y la «Actividad para el reporte» es el pie de foto del Word; el análisis la llena con la actividad del guion que se aprecia (ej. «Inicio de evacuación») y usted puede corregirla.</span>
+    <div class="drop" id="drop"><strong>Arrastre aquí las fotos, péguelas (Ctrl+V) o selecciónelas</strong><span class="note">JPG, PNG o WebP. Se optimizan automáticamente. Puede cambiar el orden arrastrando cada foto o con las flechas; «Ordenar según el guion» las acomoda en el orden cronológico de las actividades. En cada foto, la nota es para usted y la «Actividad para el reporte» es el pie de foto del Word; el análisis la llena con la actividad del guion que se aprecia (ej. «Inicio de evacuación») y usted puede corregirla.</span>
       <label class="btn" for="fileFotos">Seleccionar fotos</label><input type="file" id="fileFotos" accept="image/*" multiple hidden></div>
     <div class="progress" id="upProg"></div>
-    ${(s.fotos||[]).length?`<div class="thumbs">${s.fotos.map((f,i)=>`<div class="thumb"><div class="img"><img src="${esc(fotoURL(f))}" data-fid="${esc(f.fileId)}" alt="Evidencia ${i+1}"><span class="no">${i+1}</span>${f.origen==="video"?'<span class="src">cuadro de video</span>':""}</div><div class="body"><input type="text" data-nota="${f.id}" aria-label="Nota de la foto ${i+1}" title="Nota interna" placeholder="Nota: ¿qué muestra?" value="${esc(f.nota)}"><input type="text" data-act="${f.id}" aria-label="Actividad para el reporte, foto ${i+1}" title="Actividad del guion (pie de foto en el reporte)" placeholder="Actividad para el reporte" value="${esc(f.actividad)}"><button class="x" data-del="${f.id}">Quitar</button></div></div>`).join("")}</div>`:'<p class="note">Sin fotografías todavía.</p>'}
+    ${(s.fotos||[]).length>1?`<div class="row"><button class="btn alt sm" id="ordGuion" ${renglonesGuion(s.guion).length?"":"disabled title=\"Capture el guion y cronología en el Paso 1\""}>Ordenar según el guion y cronología</button><span class="note">El reporte coloca las fotos en este orden.</span></div>`:""}
+    ${(s.fotos||[]).length?`<div class="thumbs" id="thumbs">${s.fotos.map((f,i)=>`<div class="thumb" draggable="true" data-fid-orden="${f.id}"><div class="img"><img src="${esc(fotoURL(f))}" data-fid="${esc(f.fileId)}" alt="Evidencia ${i+1}"><span class="no">${i+1}</span>${f.origen==="video"?'<span class="src">cuadro de video</span>':""}</div><div class="body"><input type="text" data-nota="${f.id}" aria-label="Nota de la foto ${i+1}" title="Nota interna" placeholder="Nota: ¿qué muestra?" value="${esc(f.nota)}"><input type="text" data-act="${f.id}" aria-label="Actividad para el reporte, foto ${i+1}" title="Actividad del guion (pie de foto en el reporte)" placeholder="Actividad para el reporte" value="${esc(f.actividad)}"><div class="orden"><button type="button" data-mov="-1" data-id="${f.id}" aria-label="Mover la foto ${i+1} antes" ${i===0?"disabled":""}>◀</button><button type="button" data-mov="1" data-id="${f.id}" aria-label="Mover la foto ${i+1} después" ${i===s.fotos.length-1?"disabled":""}>▶</button><button class="x" data-del="${f.id}">Quitar</button></div></div></div>`).join("")}</div>`:'<p class="note">Sin fotografías todavía.</p>'}
   </div>
   <div class="card grid" style="gap:16px">
     <h3 style="color:var(--navy);font-size:1.25rem">Videos</h3>
@@ -680,10 +726,23 @@ function pasoEvidencias(c,s,e){
   };
   inp.onchange=()=>subir(inp.files);
   drop.ondragover=ev=>{ev.preventDefault();drop.classList.add("over")};drop.ondragleave=()=>drop.classList.remove("over");
-  drop.ondrop=ev=>{ev.preventDefault();drop.classList.remove("over");subir(ev.dataTransfer.files)};
+  drop.ondrop=ev=>{ev.preventDefault();drop.classList.remove("over");if(ev.dataTransfer.files.length)subir(ev.dataTransfer.files)};
+  pegarFotos=files=>{if(trabajando){toast("Espere a que termine la carga en curso");return}subir(files)};
+  // Orden manual: arrastrar una miniatura sobre otra, o flechas
+  const mover=async(id,destino)=>{const cur=S.sim[s.id];const arr=[...cur.fotos];const i=arr.findIndex(f=>f.id===id);if(i<0||destino<0||destino>=arr.length||destino===i)return;const [f]=arr.splice(i,1);arr.splice(destino,0,f);await guardarOrdenFotos(s.id,arr);render()};
+  c.querySelectorAll("[data-mov]").forEach(b=>b.onclick=()=>{const i=S.sim[s.id].fotos.findIndex(f=>f.id===b.dataset.id);mover(b.dataset.id,i+(+b.dataset.mov))});
+  let arrastrada=null;
+  c.querySelectorAll("[data-fid-orden]").forEach(t=>{
+    t.ondragstart=ev=>{if(ev.target.closest("input"))return;arrastrada=t.dataset.fidOrden;t.classList.add("arr");ev.dataTransfer.effectAllowed="move";ev.dataTransfer.setData("text/x-foto",arrastrada)};
+    t.ondragend=()=>{arrastrada=null;t.classList.remove("arr");c.querySelectorAll(".thumb.sobre").forEach(x=>x.classList.remove("sobre"))};
+    t.ondragover=ev=>{if(!arrastrada)return;ev.preventDefault();t.classList.add("sobre")};
+    t.ondragleave=()=>t.classList.remove("sobre");
+    t.ondrop=ev=>{if(!arrastrada)return;ev.preventDefault();ev.stopPropagation();const destino=S.sim[s.id].fotos.findIndex(f=>f.id===t.dataset.fidOrden);mover(arrastrada,destino)};
+  });
+  if($("#ordGuion"))$("#ordGuion").onclick=async()=>{const cur=S.sim[s.id];await guardarOrdenFotos(s.id,ordenCronologico(cur.fotos||[],cur.guion));toast("Fotos ordenadas según el guion y cronología");render()};
   c.querySelectorAll("[data-act]").forEach(i=>i.onchange=async()=>{const cur=S.sim[s.id];const fotos=cur.fotos.map(f=>f.id===i.dataset.act?{...f,actividad:i.value.trim()}:f);await guardar("simulacros",s.id,{...cur,fotos})});
   c.querySelectorAll("[data-nota]").forEach(i=>i.onchange=async()=>{const cur=S.sim[s.id];const fotos=cur.fotos.map(f=>f.id===i.dataset.nota?{...f,nota:i.value}:f);const o={...cur,fotos};delete o.id;await guardar("simulacros",s.id,o)});
-  c.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const f=cur.fotos.find(x=>x.id===b.dataset.del);if(f?.fileId)try{await api("borrarFoto",{fileId:f.fileId})}catch(e){}const o={...cur,fotos:cur.fotos.filter(x=>x.id!==b.dataset.del)};delete o.id;await guardar("simulacros",s.id,o);render()});
+  c.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const f=cur.fotos.find(x=>x.id===b.dataset.del);if(f?.fileId)try{await api("borrarFoto",{fileId:f.fileId})}catch(e){}await guardarOrdenFotos(s.id,cur.fotos.filter(x=>x.id!==b.dataset.del));render()});
   $("#addV").onclick=async()=>{const u=$("#vUrl").value.trim();if(!/^https?:\/\//.test(u)){toast("Pegue un enlace que inicie con https://");return}const cur=S.sim[s.id];const o={...cur,videos:[...(cur.videos||[]),{url:u,desc:$("#vDesc").value.trim()}]};delete o.id;await guardar("simulacros",s.id,o);render()};
   c.querySelectorAll("[data-dv]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const o={...cur,videos:cur.videos.filter((_,i)=>i!==+b.dataset.dv)};delete o.id;await guardar("simulacros",s.id,o);render()});
   c.querySelectorAll("[data-van]").forEach(k=>k.onchange=async()=>{const cur=S.sim[s.id];const o={...cur,videos:cur.videos.map((v,i)=>i===+k.dataset.van?{...v,analizar:k.checked}:v)};await guardar("simulacros",s.id,o)});
@@ -778,10 +837,19 @@ REGLAS OBLIGATORIAS DE EVALUACIÓN
 3. Nunca escribas "personal directivo"; usa siempre "personal brigadista".
 4. La llegada de apoyo externo (bomberos, ambulancias, Cruz Roja, SEDENA, policía, etc.) mencionada en el guion es simulada: no evalúes su llegada real. Evalúa solo que se registre la llamada de auxilio.
 5. En amenaza de bomba no se activa la alarma y el aviso corre de voz en voz entre brigadistas: considera correcto ese alertamiento y no penalices que la evacuación tarde más de 3 minutos; evalúa que sea ordenada, completa y discreta.
-6. En inmuebles que aplican el SCI, en el guion y la cronología el término "recursos" se refiere a los brigadistas y su equipo. Los recursos pueden estar asignados a la atención de la emergencia y/o en el Área de Espera (AE), donde pasan lista y esperan indicaciones. Interprétalo así al evaluar (no los confundas con recursos materiales externos ni con la población evacuada).`;
+6. Usa siempre el término "fuego incipiente"; nunca escribas "conato de fuego" ni "conato de incendio".
+7. En inmuebles que aplican el SCI, en el guion y la cronología el término "recursos" se refiere a los brigadistas y su equipo. Los recursos pueden estar asignados a la atención de la emergencia y/o en el Área de Espera (AE), donde pasan lista y esperan indicaciones. Interprétalo así al evaluar (no los confundas con recursos materiales externos ni con la población evacuada).`;
 
-function listaEvidencias(fotos,videos,desde=1){
+function renglonesGuion(g){return String(g||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean)}
+function bloqueRenglones(s){
+  const r=renglonesGuion(s.guion);if(!r.length)return "";
+  let t="RENGLONES NUMERADOS DEL GUION Y CRONOLOGÍA (para ubicar cada foto en el orden cronológico)";
+  for(let i=0;i<r.length&&t.length<20000;i++)t+=`\nR${i+1}: ${r[i].slice(0,220)}`;
+  return t;
+}
+function listaEvidencias(fotos,videos,desde=1,s=null){
   const l=[];
+  if(fotos.length&&s){const b=bloqueRenglones(s);if(b)l.push(b)}
   if(fotos.length) l.push("FOTOGRAFÍAS ADJUNTAS (en este orden)\n"+fotos.map((f,i)=>`Foto ${desde+i}: ${f.nota||"(sin nota)"}${f.origen==="video"?" [cuadro extraído de video]":""}`).join("\n"));
   if(videos.length) l.push("VIDEOS ADJUNTOS\n"+videos.map(v=>`${v.etiqueta}: ${v.desc||"video del simulacro"}`).join("\n"));
   return l.join("\n\n");
@@ -803,7 +871,7 @@ ${hallazgos?"HALLAZGOS DE LOTES DE FOTOGRAFÍAS YA REVISADOS\n"+hallazgos+"\n\n"
 Responde SOLO con JSON con esta forma exacta:
 {"puntos":[{"n":1,"cal":"Bueno|Regular|Malo|No aplica","obs":"observaciones detectadas (2-5 oraciones)","rec":"recomendación de mejora concreta","fotos":[1,2],"videos":["V1 min 00:35"],"conf":"alta|media|baja"}, ... los 10 puntos ...],
  "tiempoEvacuacion":"tiempo observado en video en formato mm:ss, o vacío si no se puede medir",
- "descFotos":[{"foto":1,"actividad":"actividad del guion y cronología que se aprecia en la foto, en 3 a 10 palabras (ej. Inicio de evacuación, Pase de lista en punto de reunión)"}, ... una por cada foto ...],
+ "descFotos":[{"foto":1,"actividad":"actividad del guion y cronología que se aprecia en la foto, en 3 a 10 palabras (ej. Inicio de evacuación, Pase de lista en punto de reunión)","renglon":3}, ... una por cada foto; "renglon" es el número R del renglón del guion que corresponde a esa actividad, o 0 si no se identifica ...],
  "resumen":"conclusión general del simulacro en 3-5 oraciones",
  "recomendaciones":["recomendación general priorizada", "..."]}`;
 }
@@ -824,7 +892,7 @@ ${hallazgos?"HALLAZGOS DE LOTES DE FOTOGRAFÍAS YA REVISADOS\n"+hallazgos+"\n\n"
 Responde SOLO con JSON con esta forma exacta:
 {"puntos":[{"n":1,"cal":"Bueno|Regular|Malo|No aplica","obs":"qué dice o le falta al guion sobre este punto","rec":"qué agregar o corregir en el guion","fotos":[],"videos":[],"conf":"alta|media|baja"}, ... los 10 puntos ...],
  "actividades":[{"n":1,"cal":"Bueno|Regular|Malo","obs":"lo observado en fotos o videos"}, ... las 4 actividades ...],
- "descFotos":[{"foto":1,"actividad":"actividad del guion y cronología que se aprecia en la foto, en 3 a 10 palabras (ej. Inicio de evacuación, Pase de lista en punto de reunión)"}, ... una por cada foto ...],
+ "descFotos":[{"foto":1,"actividad":"actividad del guion y cronología que se aprecia en la foto, en 3 a 10 palabras (ej. Inicio de evacuación, Pase de lista en punto de reunión)","renglon":3}, ... una por cada foto; "renglon" es el número R del renglón del guion que corresponde a esa actividad, o 0 si no se identifica ...],
  "resumen":"conclusión general en 3-5 oraciones",
  "recomendaciones":["recomendación general priorizada","..."]}`;
 }
@@ -840,7 +908,7 @@ ${evid}
 
 Describe solo lo que se ve y que sirva como evidencia para ${gab?"las actividades de gabinete: "+ACT_GAB.map(a=>a.n+". "+a.t).join("; "):"estos 10 puntos:\n"+PUNTOS.map(p=>p.n+". "+p.t+": "+p.c).join("\n")}
 
-Responde SOLO con JSON: {"hallazgos":[{"foto":${desde},"ve":"descripción objetiva de lo que se ve","actividad":"actividad del guion que se aprecia, en 3 a 10 palabras (ej. Inicio de evacuación)"}]}`;
+Responde SOLO con JSON: {"hallazgos":[{"foto":${desde},"ve":"descripción objetiva de lo que se ve","actividad":"actividad del guion que se aprecia, en 3 a 10 palabras (ej. Inicio de evacuación)","renglon":3}]} ("renglon" es el número R del renglón del guion que corresponde a esa actividad, o 0 si no se identifica)`;
 }
 function parseJSON(t){
   t=String(t||"").trim();
@@ -879,14 +947,14 @@ async function analizar(s,e,out,btn){
     let r;const actsLote=[];
     if(fotos.length<=LOTE_FOTOS){
       P(`Gemini está revisando ${fotos.length} foto(s)${listos.length?` y ${listos.length} video(s)`:""} con el guion… suele tardar de 1 a 3 minutos.`);
-      r=await api("ia",{prompt:build(s,e,listaEvidencias(fotos,listos),null),fotos:fotos.map(f=>f.fileId),videos:listos});
+      r=await api("ia",{prompt:build(s,e,listaEvidencias(fotos,listos,1,s),null),fotos:fotos.map(f=>f.fileId),videos:listos});
     } else {
       const hall=[];
       for(let a=0;a<fotos.length;a+=LOTE_FOTOS){
         const b=Math.min(fotos.length,a+LOTE_FOTOS);
         P(`Revisando fotos ${a+1} a ${b} de ${fotos.length}…`);
-        const rl=await api("ia",{prompt:promptLote(s,e,listaEvidencias(fotos.slice(a,b),[],a+1),a+1),fotos:fotos.slice(a,b).map(f=>f.fileId),desde:a});
-        (parseJSON(rl.texto).hallazgos||[]).forEach(h=>{hall.push(`Foto ${h.foto}: ${h.ve}`);if(h.actividad)actsLote.push({foto:h.foto,actividad:h.actividad})});
+        const rl=await api("ia",{prompt:promptLote(s,e,listaEvidencias(fotos.slice(a,b),[],a+1,s),a+1),fotos:fotos.slice(a,b).map(f=>f.fileId),desde:a});
+        (parseJSON(rl.texto).hallazgos||[]).forEach(h=>{hall.push(`Foto ${h.foto}: ${h.ve}`);if(h.actividad)actsLote.push({foto:h.foto,actividad:h.actividad,renglon:h.renglon})});
       }
       P("Integrando la evaluación de los 10 puntos…");
       r=await api("ia",{prompt:build(s,e,listaEvidencias([],listos),hall.join("\n")),videos:listos});
@@ -894,13 +962,14 @@ async function analizar(s,e,out,btn){
     const res=parseJSON(r.texto);
     const ev=normalizar(res,s,e);ev.modelo=r.modelo||"";
     // Actividad del guion que se aprecia en cada foto → pie de foto del reporte
-    const acts=new Map();
-    [...actsLote,...(Array.isArray(res.descFotos)?res.descFotos:[])].forEach(d=>{const n=+d.foto;if(n>0&&d.actividad)acts.set(n,limpiarTexto(String(d.actividad)))});
+    const acts=new Map(),rens=new Map();
+    [...actsLote,...(Array.isArray(res.descFotos)?res.descFotos:[])].forEach(d=>{const n=+d.foto;if(n>0&&d.actividad)acts.set(n,limpiarTexto(String(d.actividad)));if(n>0&&+d.renglon>0)rens.set(n,+d.renglon)});
     const porId=new Map(fotos.map((f,i)=>[f.fileId,i+1]));
     const cur=S.sim[s.id];
-    const fotosAct=(cur.fotos||[]).map(f=>{const n=porId.get(f.fileId);return n&&acts.has(n)?{...f,actividad:acts.get(n)}:f});
+    const fotosAct=(cur.fotos||[]).map(f=>{const n=porId.get(f.fileId);if(!n)return f;const o={...f};if(acts.has(n))o.actividad=acts.get(n);if(rens.has(n))o.renglon=rens.get(n);else delete o.renglon;return o});
     trabajando=false;
-    await guardar("simulacros",s.id,{...cur,fotos:fotosAct,evaluacion:ev});
+    // Las fotos quedan en el orden cronológico del guion (la numeración de la evaluación se ajusta)
+    await guardarOrdenFotos(s.id,ordenCronologico(fotosAct,cur.guion),{evaluacion:ev});
     toast("Evaluación generada. Revísela y ajústela si lo considera necesario.");render();
   }catch(err){
     trabajando=false;btn.disabled=false;
@@ -908,7 +977,11 @@ async function analizar(s,e,out,btn){
     pendienteRender=false;
   }
 }
-function limpiarTexto(t){return String(t||"").replace(/personal directivo/gi,m=>m[0]==="P"?"Personal brigadista":"personal brigadista")}
+function terminos(t){
+  const may=(m,x)=>m[0]===m[0].toUpperCase()?x[0].toUpperCase()+x.slice(1):x;
+  return String(t??"").replace(/\bconatos(\s+de\s+(fuego|incendio))?\b/gi,m=>may(m,"fuegos incipientes")).replace(/\bconato(\s+de\s+(fuego|incendio))?\b/gi,m=>may(m,"fuego incipiente"));
+}
+function limpiarTexto(t){return terminos(String(t||"").replace(/personal directivo/gi,m=>m[0]==="P"?"Personal brigadista":"personal brigadista"))}
 function normalizar(r,s,e){
   const base=evaluacionVacia(s,e);
   const okCal=c=>["Bueno","Regular","Malo","No aplica"].includes(c)?c:"";
@@ -1033,6 +1106,7 @@ function pasoReporte(c,s,e){
       </details>
     </div>
     <label><input type="checkbox" id="incGuion" ${s.incGuion?"checked":""}> Agregar como anexo el guion y cronología</label>
+    <label><input type="checkbox" id="ordCrono" ${s.ordenCrono===false?"":"checked"}> Colocar las fotos en orden cronológico según el guion y cronología</label>
     ${falt?`<div class="alert warn">Hay ${falt} punto(s) sin calificar. Puede generar el reporte, pero aparecerán como «Sin calificar».</div>`:""}
     <div class="row"><button class="btn orange" type="submit" id="genW">Generar reporte en Word</button></div>
     <div id="repOut" class="progress"></div>
@@ -1091,8 +1165,10 @@ function pasoReporte(c,s,e){
     const nom=$("#evNom").value.trim();if(!nom){toast("Escriba el nombre de quien evalúa");return}
     lsSet("vime_sim_evaluador",nom);lsSet("vime_sim_cargo",$("#evCargo").value.trim());
     const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incGuion:$("#incGuion").checked,logoIzq:selIzq,logoDer:selDer};delete o.id;
+    o.ordenCrono=$("#ordCrono").checked;
     const out=$("#repOut");const b=$("#genW");b.disabled=true;trabajando=true;
     try{
+      if(o.ordenCrono&&renglonesGuion(o.guion).length){await guardarOrdenFotos(s.id,ordenCronologico(S.sim[s.id].fotos||[],o.guion));o.fotos=S.sim[s.id].fotos;o.evaluacion=S.sim[s.id].evaluacion}
       out.textContent="Armando el documento…";
       const blob=await generarDocx({...o,id:s.id},e,t=>out.textContent=t);
       const nombre=`Evidencia_y_Evaluacion_Simulacro_${(e.nombreComercial||e.razonSocial).replace(/[^\wÁÉÍÓÚÑáéíóúñ]+/g,"_").slice(0,40)}_No${String(o.numero).replace(/\W+/g,"")}_${o.fechaEvaluacion||hoyISO()}.docx`;
@@ -1114,7 +1190,7 @@ async function generarDocx(s,e,prog){
   const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,ImageRun,BorderStyle,ShadingType,Header,Footer,PageNumber,HeadingLevel,VerticalAlign,PageBreak,TableLayoutType}=D;
   const F="Arial";
   const ev=s.evaluacion;const g=califGlobal(ev);
-  const T=(text,o={})=>new TextRun({text:String(text??""),font:F,size:o.size||22,bold:o.bold,color:o.color,italics:o.it});
+  const T=(text,o={})=>new TextRun({text:terminos(text),font:F,size:o.size||22,bold:o.bold,color:o.color,italics:o.it});
   const P=(runs,o={})=>new Paragraph({children:Array.isArray(runs)?runs:[typeof runs==="string"?T(runs,o):runs],alignment:o.align,spacing:{after:o.after??120,before:o.before??0,line:300},keepNext:o.keepNext});
   const multi=(txt,o={})=>String(txt||"—").split(/\n/).map(l=>P([T(l,o)],{after:60}));
   const H=(txt)=>new Paragraph({children:[new TextRun({text:txt,font:F,size:28,bold:true,color:COL.navy})],spacing:{before:300,after:140},keepNext:true,border:{bottom:{style:BorderStyle.SINGLE,size:12,color:COL.orange,space:4}}});
@@ -1174,8 +1250,8 @@ async function generarDocx(s,e,prog){
         if(j<s.fotos.length){
           prog(`Insertando foto ${j+1} de ${s.fotos.length}…`);
           const f=s.fotos[j];let ch=[];
-          try{const b=await fotoBlob(f);const d=await dimsDe(b);const maxW=290,maxH=220;const r=Math.min(maxW/d.w,maxH/d.h);
-            ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[new ImageRun({data:new Uint8Array(await b.arrayBuffer()),transformation:{width:Math.round(d.w*r),height:Math.round(d.h*r)}})]}))}
+          try{const b=await fotoBlob(f);const d=await dimsDe(b);const ancho=Math.round(7/2.54*96); // 7 cm
+            ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[new ImageRun({data:new Uint8Array(await b.arrayBuffer()),transformation:{width:ancho,height:Math.round(d.h*ancho/d.w)}})]}))}
           catch(err){ch.push(P("(imagen no disponible)"))}
           ch.push(P([T(`Foto ${j+1}. `,{bold:true,size:18,color:COL.navy}),T(f.actividad||(f.origen==="video"?"Actividad del simulacro (cuadro de video)":f.nota)||"",{size:18})],{align:AlignmentType.CENTER,after:0}));
           celdas.push(new TableCell({children:ch,width:{size:cw,type:WidthType.DXA},margins:{top:100,bottom:100,left:100,right:100},borders:bord}));
