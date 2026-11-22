@@ -132,6 +132,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--navy-2);outline:none;
 #fSim .opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 22px}
 .vopc{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .vopc select{width:auto;min-width:90px}
+.zoomctl{display:inline-flex;align-items:center;gap:4px}
+.zoomctl .note{margin-right:2px}
+.zbtn{font:inherit;font-weight:700;min-width:34px;min-height:32px;padding:0 8px;border:1.5px solid var(--line);background:var(--card);color:var(--navy);border-radius:8px;cursor:pointer}
+.zbtn:hover{border-color:var(--navy)}
+.zbtn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.zval{min-width:60px}
 .chip{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:4px 14px;font-size:.92rem;cursor:pointer}
 fieldset{border:0;padding:0;margin:0;min-width:0}
 legend{padding:0;margin-bottom:6px}
@@ -438,9 +444,20 @@ async function iniciar(){
   $("#app").innerHTML='<p class="progress">Conectando con su Google Drive…</p>';
   try{ await conectar() }catch(e){ if(e.error!=="clave") pantallaAcceso(e.mensaje||String(e)) }
 }
+const ATAJO_ZOOM=false;
+// Tamaño de la pantalla (ampliar o reducir), se recuerda en este equipo
+const ZOOM_MIN=.7,ZOOM_MAX=1.6;
+function nivelZoom(){const z=+lsGet("vime_sim_zoom",1);return z>=ZOOM_MIN&&z<=ZOOM_MAX?z:1}
+function aplicarZoom(z){z=Math.round(Math.min(ZOOM_MAX,Math.max(ZOOM_MIN,z))*10)/10;lsSet("vime_sim_zoom",z);
+  if(window.vime&&window.vime.zoom)window.vime.zoom(z);else document.body.style.zoom=z;
+  const e=document.getElementById("zoomVal");if(e)e.textContent=Math.round(z*100)+"%";
+  document.querySelectorAll(".zbtn[data-z]").forEach(b=>{const d=+b.dataset.z;b.disabled=(d<0&&z<=ZOOM_MIN)||(d>0&&z>=ZOOM_MAX)});}
+function zoomHTML(){const z=nivelZoom();return `<span class="zoomctl" role="group" aria-label="Tamaño de la pantalla"><span class="note">Tamaño</span><button type="button" class="zbtn" data-z="-1" aria-label="Reducir el tamaño" title="Reducir${ATAJO_ZOOM?" (Ctrl −)":""}" ${z<=ZOOM_MIN?"disabled":""}>−</button><button type="button" class="zbtn zval" id="zoomVal" data-zn="1" aria-label="Volver al tamaño normal" title="Tamaño normal${ATAJO_ZOOM?" (Ctrl 0)":""}">${Math.round(z*100)}%</button><button type="button" class="zbtn" data-z="1" aria-label="Ampliar el tamaño" title="Ampliar${ATAJO_ZOOM?" (Ctrl +)":""}" ${z>=ZOOM_MAX?"disabled":""}>+</button></span>`}
+document.addEventListener("click",ev=>{const b=ev.target.closest&&ev.target.closest(".zbtn");if(!b)return;aplicarZoom(b.dataset.zn?1:nivelZoom()+(+b.dataset.z)*.1)});
+aplicarZoom(nivelZoom());
 function pintarEstado(){
   $("#status").innerHTML=`<span class="pill ok">● Datos en su Google Drive</span>${S.ia?`<span class="pill ok">● Análisis con Gemini</span>`:'<span class="pill warn">● Análisis con IA sin configurar</span>'}
-    <span style="flex:1"></span>${enlacePersonal()?'<button class="btn alt sm" id="bEnl">Mi enlace</button>':""}<button class="btn alt sm" id="bRec">Actualizar</button><button class="btn alt sm" id="bSal">Cerrar sesión</button>`;
+    <span style="flex:1"></span>${zoomHTML()}${enlacePersonal()?'<button class="btn alt sm" id="bEnl">Mi enlace</button>':""}<button class="btn alt sm" id="bRec">Actualizar</button><button class="btn alt sm" id="bSal">Cerrar sesión</button>`;
   if($("#bEnl"))$("#bEnl").onclick=verEnlacePersonal;
   $("#bRec").onclick=async()=>{try{await conectar();toast("Datos actualizados")}catch(e){toast(e.mensaje||String(e))}};
   $("#bSal").onclick=()=>{CFG.clave="";lsSet("vime_sim_cfg",CFG);S.ready=false;S.est={};S.sim={};pantallaAcceso()};
