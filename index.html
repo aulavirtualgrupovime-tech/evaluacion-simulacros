@@ -121,10 +121,17 @@ textarea.guion{min-height:340px;font-size:1rem}
 input:focus,select:focus,textarea:focus{border-color:var(--navy-2);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--navy-2) 25%,transparent)}
 .seg{display:flex;flex-wrap:wrap;gap:8px}
 .seg input{position:absolute;opacity:0;pointer-events:none}
-.seg label{display:inline-flex;align-items:center;min-height:48px;padding:8px 18px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:500;background:var(--card)}
+.seg label{display:inline-flex;align-items:center;min-height:44px;padding:6px 16px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:500;background:var(--card)}
 .seg input:checked+label{border-color:var(--navy);background:var(--navy);color:var(--on-navy)}
 .seg input:focus-visible+label{outline:3px solid var(--gold);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+#fSim .seg label{min-height:38px;padding:4px 14px;font-size:.95rem}
+#fSim fieldset.field{gap:4px}
+#fSim{gap:14px}
+#fSim input[type=text],#fSim input[type=number],#fSim input[type=datetime-local]{min-height:42px;padding-top:6px;padding-bottom:6px}
+#fSim .opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 22px}
+.vopc{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.vopc select{width:auto;min-width:90px}
 .chip{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:4px 14px;font-size:.92rem;cursor:pointer}
 fieldset{border:0;padding:0;margin:0;min-width:0}
 legend{padding:0;margin-bottom:6px}
@@ -140,10 +147,10 @@ legend{padding:0;margin-bottom:6px}
 @media (max-width:640px){.steps{grid-template-columns:1fr 1fr}}
 
 /* Evidencias */
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
 .thumb{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);display:flex;flex-direction:column}
-.thumb .img{position:relative;aspect-ratio:4/3;background:var(--soft)}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .img{position:relative;aspect-ratio:4/3;background:var(--soft);overflow:hidden}
+.thumb .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 .thumb .no{position:absolute;top:6px;left:6px;background:var(--navy);color:var(--on-navy);font-weight:700;border-radius:6px;padding:0 8px;font-size:.85rem}
 .thumb .src{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:0 8px;font-size:.78rem}
 .thumb .body{padding:8px;display:flex;flex-direction:column;gap:6px}
@@ -151,7 +158,8 @@ legend{padding:0;margin-bottom:6px}
 .thumb[draggable=true]{cursor:grab}
 .thumb.arr{opacity:.45}
 .thumb.sobre{outline:3px solid var(--orange);outline-offset:2px}
-.thumb .orden{display:flex;gap:6px;align-items:center}
+.thumb .orden{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.thumb .mini{font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:-2px}
 .thumb .orden button{min-width:40px;min-height:36px;border:1px solid var(--line);background:var(--soft);border-radius:8px;cursor:pointer;font-weight:700;color:var(--navy)}
 .thumb .orden button:disabled{opacity:.35;cursor:default}
 .thumb .x{margin-left:auto;background:none;border:0;color:var(--bad);cursor:pointer;font-size:.88rem;text-decoration:underline}
@@ -599,12 +607,12 @@ function pasoDatos(c,s,e){
       <div class="field"><label for="num">Número de simulacro</label><input type="text" id="num" value="${esc(s.numero)}"></div>
       <div class="field"><label for="fh">Fecha y hora</label><input type="datetime-local" id="fh" value="${esc(s.fechaHora)}"></div>
     </div>
-    <fieldset class="field"><legend class="lbl">Tipo de simulacro</legend>${seg("tipo",["De campo","De gabinete"],s.tipo)}</fieldset>
+    <div class="opciones"><fieldset class="field"><legend class="lbl">Tipo de simulacro</legend>${seg("tipo",["De campo","De gabinete"],s.tipo)}</fieldset>
+    <fieldset class="field"><legend class="lbl">Tipo de evacuación</legend>${seg("evac",["Total","Parcial"],s.evacuacion)}</fieldset>
+    <fieldset class="field"><legend class="lbl">Programación</legend>${seg("prog",["Con previo aviso","Sin previo aviso"],s.programacion||"Con previo aviso")}</fieldset></div>
     <div class="field"><label for="hip">Hipótesis</label><input type="text" id="hip" placeholder="Ejemplo: sismo de magnitud 7.2 con lesionado en almacén" value="${esc(s.hipotesis)}">
       <div class="chips">${HIPOTESIS.map(h=>`<button type="button" class="chip" data-h="${esc(h)}">${esc(h)}</button>`).join("")}</div></div>
     <fieldset class="field"><legend class="lbl">¿El alertamiento es por alerta sísmica?</legend>${seg("alerta",["Sí","No"],s.alertaSismica?"Sí":"No")}<span class="hint">Tiempo recomendado de evacuación: 50 segundos como máximo con alerta sísmica y menos de 3 minutos en los demás casos. En amenaza de bomba (sin alarma, aviso de voz en voz) puede tardar más.</span></fieldset>
-    <fieldset class="field"><legend class="lbl">Tipo de evacuación</legend>${seg("evac",["Total","Parcial"],s.evacuacion)}</fieldset>
-    <fieldset class="field"><legend class="lbl">Programación</legend>${seg("prog",["Con previo aviso","Sin previo aviso"],s.programacion||"Con previo aviso")}</fieldset>
     <div class="field"><label for="guion">Guion y cronología</label><span class="hint">Pegue aquí el guion y la cronología diseñados para el simulacro (minuto a minuto). En simulacros de gabinete es la base principal de la evaluación.</span><textarea class="guion" id="guion" placeholder="11:00 Se escucha la alerta sísmica. El Coordinador General asume el mando…">${esc(s.guion)}</textarea></div>
     <details ${m.tiempoEvac||m.evacuados?"open":""}><summary class="lbl" style="cursor:pointer">Datos medidos durante el simulacro (opcional, mejora la precisión)</summary>
       <div class="grid g3" style="margin-top:12px">
@@ -654,6 +662,22 @@ async function agregarFotos(s,items){
   const o={...S.sim[s.id],fotos};delete o.id;
   await guardar("simulacros",s.id,o);render();
 }
+// Gira una foto 90° y la reemplaza (misma posición, nota y pie de foto)
+async function girarFoto(simId,fotoId,grados){
+  const cur=S.sim[simId];const f=(cur.fotos||[]).find(x=>x.id===fotoId);if(!f)return;
+  trabajando=true;
+  try{
+    const bmp=await createImageBitmap(await fotoBlob(f));
+    const cv=document.createElement("canvas");cv.width=bmp.height;cv.height=bmp.width;
+    const x=cv.getContext("2d");x.translate(cv.width/2,cv.height/2);x.rotate(grados*Math.PI/180);x.drawImage(bmp,-bmp.width/2,-bmp.height/2);
+    const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.88));
+    const up=await api("subirFoto",{simId,b64:await blobAB64(blob),mime:"image/jpeg",nombre:"foto_"+uid()+".jpg"});
+    S.blobs.set(up.fileId,blob);S.urls.set(up.fileId,URL.createObjectURL(blob));IDB.put(up.fileId,blob);
+    const fotos=S.sim[simId].fotos.map(x=>x.id===fotoId?{...x,fileId:up.fileId}:x);
+    const o={...S.sim[simId],fotos};delete o.id;await guardar("simulacros",simId,o);
+    try{await api("borrarFoto",{fileId:f.fileId})}catch(e){}
+  }finally{trabajando=false}
+}
 // Cambia el orden (o quita fotos) y ajusta los números «Foto N» citados en la evaluación
 async function guardarOrdenFotos(simId,nuevas,extra={}){
   const cur=S.sim[simId];const antes=cur.fotos||[];
@@ -693,27 +717,27 @@ function pasoEvidencias(c,s,e){
   ${gab?`<div class="alert ${s.guion?"ok":"warn"}">Simulacro de gabinete: la evaluación revisa si el guion y la cronología describen los 10 puntos, y verifica en las fotos o el video las actividades de gabinete (pase de lista, lectura del guion, debate y llenado de formatos). ${s.guion?"Guion capturado ("+s.guion.length.toLocaleString("es-MX")+" caracteres).":"Aún no hay guion capturado: agréguelo en el Paso 1."}</div>`:""}
   <div class="card grid" style="gap:16px">
     <h3 style="color:var(--navy);font-size:1.25rem">Fotografías del simulacro</h3>
-    <div class="drop" id="drop"><strong>Arrastre aquí las fotos, péguelas (Ctrl+V) o selecciónelas</strong><span class="note">JPG, PNG o WebP. Se optimizan automáticamente. Puede cambiar el orden arrastrando cada foto o con las flechas; «Ordenar según el guion» las acomoda en el orden cronológico de las actividades. En cada foto, la nota es para usted y la «Actividad para el reporte» es el pie de foto del Word; el análisis la llena con la actividad del guion que se aprecia (ej. «Inicio de evacuación») y usted puede corregirla.</span>
+    <div class="drop" id="drop"><strong>Arrastre aquí las fotos, péguelas (Ctrl+V) o selecciónelas</strong><span class="note">JPG, PNG o WebP. Se optimizan automáticamente. En cada foto, la nota es para usted y la «Actividad para el reporte» es el pie de foto del Word; el análisis la llena con la actividad del guion que se aprecia (ej. «Inicio de evacuación») y usted puede corregirla.</span>
       <label class="btn" for="fileFotos">Seleccionar fotos</label><input type="file" id="fileFotos" accept="image/*" multiple hidden></div>
     <div class="progress" id="upProg"></div>
-    ${(s.fotos||[]).length>1?`<div class="row"><button class="btn alt sm" id="ordGuion" ${renglonesGuion(s.guion).length?"":"disabled title=\"Capture el guion y cronología en el Paso 1\""}>Ordenar según el guion y cronología</button><span class="note">El reporte coloca las fotos en este orden.</span></div>`:""}
-    ${(s.fotos||[]).length?`<div class="thumbs" id="thumbs">${s.fotos.map((f,i)=>`<div class="thumb" draggable="true" data-fid-orden="${f.id}"><div class="img"><img src="${esc(fotoURL(f))}" data-fid="${esc(f.fileId)}" alt="Evidencia ${i+1}"><span class="no">${i+1}</span>${f.origen==="video"?'<span class="src">cuadro de video</span>':""}</div><div class="body"><input type="text" data-nota="${f.id}" aria-label="Nota de la foto ${i+1}" title="Nota interna" placeholder="Nota: ¿qué muestra?" value="${esc(f.nota)}"><input type="text" data-act="${f.id}" aria-label="Actividad para el reporte, foto ${i+1}" title="Actividad del guion (pie de foto en el reporte)" placeholder="Actividad para el reporte" value="${esc(f.actividad)}"><div class="orden"><button type="button" data-mov="-1" data-id="${f.id}" aria-label="Mover la foto ${i+1} antes" ${i===0?"disabled":""}>◀</button><button type="button" data-mov="1" data-id="${f.id}" aria-label="Mover la foto ${i+1} después" ${i===s.fotos.length-1?"disabled":""}>▶</button><button class="x" data-del="${f.id}">Quitar</button></div></div></div>`).join("")}</div>`:'<p class="note">Sin fotografías todavía.</p>'}
+    ${(s.fotos||[]).length>1?`<div class="alert ok" style="padding:10px 14px">Acomode las fotos a su elección arrastrándolas o con las flechas ◀ ▶. El orden que elija es el que aparecerá en el reporte. Use ⟲ ⟳ para girar una foto.</div>`:""}
+    ${(s.fotos||[]).length?`<div class="thumbs" id="thumbs">${s.fotos.map((f,i)=>`<div class="thumb" draggable="true" data-fid-orden="${f.id}"><div class="img"><img src="${esc(fotoURL(f))}" data-fid="${esc(f.fileId)}" alt="Evidencia ${i+1}"><span class="no">${i+1}</span>${f.origen==="video"?'<span class="src">cuadro de video</span>':""}</div><div class="body"><label class="mini" for="nota_${f.id}">Nota interna (no sale en el reporte)</label><input type="text" id="nota_${f.id}" data-nota="${f.id}" title="${esc(f.nota)}" placeholder="¿Qué muestra?" value="${esc(f.nota)}"><label class="mini" for="act_${f.id}">Pie de foto en el reporte</label><input type="text" id="act_${f.id}" data-act="${f.id}" title="${esc(f.actividad)}" placeholder="Ej. Inicio de evacuación" value="${esc(f.actividad)}"><div class="orden"><button type="button" data-gir="-90" data-id="${f.id}" aria-label="Girar la foto ${i+1} a la izquierda" title="Girar a la izquierda">⟲</button><button type="button" data-gir="90" data-id="${f.id}" aria-label="Girar la foto ${i+1} a la derecha" title="Girar a la derecha">⟳</button><button type="button" data-mov="-1" data-id="${f.id}" aria-label="Mover la foto ${i+1} antes" ${i===0?"disabled":""}>◀</button><button type="button" data-mov="1" data-id="${f.id}" aria-label="Mover la foto ${i+1} después" ${i===s.fotos.length-1?"disabled":""}>▶</button><button class="x" data-del="${f.id}">Quitar</button></div></div></div>`).join("")}</div>`:'<p class="note">Sin fotografías todavía.</p>'}
   </div>
   <div class="card grid" style="gap:16px">
     <h3 style="color:var(--navy);font-size:1.25rem">Videos</h3>
-    <p class="note">Pegue el enlace de Google Drive de cada video. Gemini lo revisa directamente si el archivo es suyo o está compartido con su cuenta de Google y pesa hasta 45 MB. Para videos más pesados use «Extraer cuadros»: la app toma fotogramas y los agrega como fotos.</p>
+    <div class="drop" id="dropVid"><strong>Arrastre aquí los videos del simulacro o selecciónelos</strong><span class="note">Videos guardados en su equipo (MP4 de preferencia). La app toma cuadros (fotogramas) de cada video y los agrega a las fotos, para el análisis y para la evidencia fotográfica del reporte.</span>
+      <div class="vopc"><label class="btn" for="fileVid" tabindex="0" data-tecla>Seleccionar video(s)</label><input type="file" id="fileVid" accept="video/*" multiple hidden>
+      <label for="nCuadros" class="lbl">Cuadros por video</label><select id="nCuadros">${[8,12,16,24].map(n=>`<option ${n===12?"selected":""}>${n}</option>`).join("")}</select></div></div>
+    <div id="vidZone"></div>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <h4 style="font-size:1.1rem">Enlace del video en Drive</h4>
+    <p class="note">El enlace se lista en el reporte como «Video de referencia». Si el archivo es suyo o está compartido con su cuenta de Google y pesa hasta 45 MB, Gemini también lo revisa; si pesa más, use la opción de arriba.</p>
     <div class="grid g2" style="align-items:end">
       <div class="field"><label for="vUrl">Enlace del video (Drive)</label><input type="url" id="vUrl" placeholder="https://drive.google.com/file/d/…"></div>
       <div class="field"><label for="vDesc">Descripción</label><input type="text" id="vDesc" placeholder="Ej. Evacuación planta alta, cámara 1"></div>
     </div>
     <div><button class="btn alt sm" id="addV">Agregar enlace</button></div>
     ${(s.videos||[]).length?`<div class="vlist">${s.videos.map((v,i)=>`<div class="vitem"><strong>V${i+1}</strong><a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.desc||v.url)}</a><label style="font-size:.95rem"><input type="checkbox" data-van="${i}" ${v.analizar!==false?"checked":""}> Analizar con IA</label><button class="x btn danger sm" data-dv="${i}">Quitar</button></div>`).join("")}</div>`:""}
-    <hr style="border:0;border-top:1px solid var(--line);width:100%">
-    <h4 style="font-size:1.1rem">Extraer cuadros de videos para el análisis</h4>
-    <p class="note">Puede seleccionar varios videos a la vez; de cada uno se toman los cuadros indicados.</p>
-    <div class="row"><label class="btn" for="fileVid">Seleccionar video(s)</label><input type="file" id="fileVid" accept="video/*" multiple hidden>
-      <div class="field" style="width:220px"><label for="nCuadros">Cuadros a extraer</label><select id="nCuadros">${[8,12,16,24].map(n=>`<option ${n===12?"selected":""}>${n}</option>`).join("")}</select></div></div>
-    <div id="vidZone"></div>
   </div>
   <div class="row"><button class="btn" id="aEval">Continuar a la evaluación</button></div>
   </div>`;
@@ -729,7 +753,7 @@ function pasoEvidencias(c,s,e){
   drop.ondrop=ev=>{ev.preventDefault();drop.classList.remove("over");if(ev.dataTransfer.files.length)subir(ev.dataTransfer.files)};
   pegarFotos=files=>{if(trabajando){toast("Espere a que termine la carga en curso");return}subir(files)};
   // Orden manual: arrastrar una miniatura sobre otra, o flechas
-  const mover=async(id,destino)=>{const cur=S.sim[s.id];const arr=[...cur.fotos];const i=arr.findIndex(f=>f.id===id);if(i<0||destino<0||destino>=arr.length||destino===i)return;const [f]=arr.splice(i,1);arr.splice(destino,0,f);await guardarOrdenFotos(s.id,arr);render()};
+  const mover=async(id,destino)=>{const cur=S.sim[s.id];const arr=[...cur.fotos];const i=arr.findIndex(f=>f.id===id);if(i<0||destino<0||destino>=arr.length||destino===i)return;const [f]=arr.splice(i,1);arr.splice(destino,0,f);await guardarOrdenFotos(s.id,arr,{ordenManual:true});render()};
   c.querySelectorAll("[data-mov]").forEach(b=>b.onclick=()=>{const i=S.sim[s.id].fotos.findIndex(f=>f.id===b.dataset.id);mover(b.dataset.id,i+(+b.dataset.mov))});
   let arrastrada=null;
   c.querySelectorAll("[data-fid-orden]").forEach(t=>{
@@ -739,14 +763,17 @@ function pasoEvidencias(c,s,e){
     t.ondragleave=()=>t.classList.remove("sobre");
     t.ondrop=ev=>{if(!arrastrada)return;ev.preventDefault();ev.stopPropagation();const destino=S.sim[s.id].fotos.findIndex(f=>f.id===t.dataset.fidOrden);mover(arrastrada,destino)};
   });
-  if($("#ordGuion"))$("#ordGuion").onclick=async()=>{const cur=S.sim[s.id];await guardarOrdenFotos(s.id,ordenCronologico(cur.fotos||[],cur.guion));toast("Fotos ordenadas según el guion y cronología");render()};
+  c.querySelectorAll("[data-gir]").forEach(b=>b.onclick=async()=>{if(trabajando){toast("Espere a que termine la carga en curso");return}const txt=b.textContent;b.disabled=true;b.textContent="…";b.setAttribute("aria-busy","true");try{await girarFoto(s.id,b.dataset.id,+b.dataset.gir);render()}catch(e){toast("No se pudo girar la foto: "+(e.mensaje||e.message||e));b.disabled=false;b.textContent=txt;b.removeAttribute("aria-busy")}});
   c.querySelectorAll("[data-act]").forEach(i=>i.onchange=async()=>{const cur=S.sim[s.id];const fotos=cur.fotos.map(f=>f.id===i.dataset.act?{...f,actividad:i.value.trim()}:f);await guardar("simulacros",s.id,{...cur,fotos})});
   c.querySelectorAll("[data-nota]").forEach(i=>i.onchange=async()=>{const cur=S.sim[s.id];const fotos=cur.fotos.map(f=>f.id===i.dataset.nota?{...f,nota:i.value}:f);const o={...cur,fotos};delete o.id;await guardar("simulacros",s.id,o)});
   c.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const f=cur.fotos.find(x=>x.id===b.dataset.del);if(f?.fileId)try{await api("borrarFoto",{fileId:f.fileId})}catch(e){}await guardarOrdenFotos(s.id,cur.fotos.filter(x=>x.id!==b.dataset.del));render()});
   $("#addV").onclick=async()=>{const u=$("#vUrl").value.trim();if(!/^https?:\/\//.test(u)){toast("Pegue un enlace que inicie con https://");return}const cur=S.sim[s.id];const o={...cur,videos:[...(cur.videos||[]),{url:u,desc:$("#vDesc").value.trim()}]};delete o.id;await guardar("simulacros",s.id,o);render()};
   c.querySelectorAll("[data-dv]").forEach(b=>b.onclick=async()=>{const cur=S.sim[s.id];const o={...cur,videos:cur.videos.filter((_,i)=>i!==+b.dataset.dv)};delete o.id;await guardar("simulacros",s.id,o);render()});
   c.querySelectorAll("[data-van]").forEach(k=>k.onchange=async()=>{const cur=S.sim[s.id];const o={...cur,videos:cur.videos.map((v,i)=>i===+k.dataset.van?{...v,analizar:k.checked}:v)};await guardar("simulacros",s.id,o)});
-  $("#fileVid").onchange=()=>{const fs=[...$("#fileVid").files];if(fs.length)extraerCuadros(fs,+$("#nCuadros").value,s)};
+  $("#fileVid").onchange=()=>{const fs=[...$("#fileVid").files];$("#fileVid").value="";if(fs.length)extraerCuadros(fs,+$("#nCuadros").value,s)};
+  const dropVid=$("#dropVid");
+  dropVid.ondragover=ev=>{ev.preventDefault();dropVid.classList.add("over")};dropVid.ondragleave=()=>dropVid.classList.remove("over");
+  dropVid.ondrop=ev=>{ev.preventDefault();dropVid.classList.remove("over");if(trabajando){toast("Espere a que termine el proceso en curso");return}const fs=[...ev.dataTransfer.files].filter(f=>/^video\//.test(f.type));if(!fs.length){toast("Arrastre archivos de video (MP4, MOV o WEBM)");return}extraerCuadros(fs,+$("#nCuadros").value,s)};
   $("#aEval").onclick=()=>{V.paso=3;lsSet("vime_sim_view",V);render()};
 }
 async function extraerCuadros(files,n,s){
@@ -969,7 +996,8 @@ async function analizar(s,e,out,btn){
     const fotosAct=(cur.fotos||[]).map(f=>{const n=porId.get(f.fileId);if(!n)return f;const o={...f};if(acts.has(n))o.actividad=acts.get(n);if(rens.has(n))o.renglon=rens.get(n);else delete o.renglon;return o});
     trabajando=false;
     // Las fotos quedan en el orden cronológico del guion (la numeración de la evaluación se ajusta)
-    await guardarOrdenFotos(s.id,ordenCronologico(fotosAct,cur.guion),{evaluacion:ev});
+    // Si el usuario no ha acomodado las fotos, se proponen en el orden de las actividades del guion
+    await guardarOrdenFotos(s.id,cur.ordenManual?fotosAct:ordenCronologico(fotosAct,cur.guion),{evaluacion:ev});
     toast("Evaluación generada. Revísela y ajústela si lo considera necesario.");render();
   }catch(err){
     trabajando=false;btn.disabled=false;
@@ -1020,7 +1048,7 @@ function pasoEvaluacion(c,s,e){
     <p class="note">${gab?`Se revisará si el guion y la cronología describen los 10 puntos, y se verificarán en ${(s.fotos||[]).length} foto(s) las 4 actividades de gabinete.`:`Se revisarán ${(s.fotos||[]).length} fotografía(s) y ${(s.videos||[]).filter(v=>v.analizar!==false).length} video(s) de Drive junto con el guion, la hipótesis y los datos medidos.`} El resultado es una propuesta: usted la revisa, ajusta y firma como evaluador.</p>
     ${t!=null&&!gab?`<div class="timebox"><span class="cal ${juicioEvac(s,t).cls}">Evacuación: ${fmtSeg(t)}</span><span class="note">${esc(juicioEvac(s,t).txt)} · Recomendado: ${esc(reglaEvac(s))}</span></div>`:""}
     ${ev?.tiempoVideo&&!gab?`<p class="note">Tiempo de evacuación observado por Gemini en video: <strong>${esc(ev.tiempoVideo)}</strong> (recomendado: ${esc(reglaEvac(s))}).</p>`:""}
-    <div class="row"><button class="btn orange" id="btnIA">${ev?.origen==="ia"?"Volver a analizar":"Analizar evidencias"}</button>${!ev?'<button class="btn alt" id="btnManual">Evaluar manualmente</button>':""}</div>
+    <div class="row">${gab&&!s.guion?`<div class="alert warn">Capture el guion y la cronología en el Paso 1: es la base de la evaluación de gabinete.</div>`:""}<button class="btn orange" id="btnIA" ${gab&&!s.guion?"disabled":""}>${ev?.origen==="ia"?"Volver a analizar":"Analizar evidencias"}</button>${!ev?'<button class="btn alt" id="btnManual">Evaluar manualmente</button>':""}</div>
     <div id="iaOut"></div>
     ${ev?.origen==="ia"&&ev.fechaIA?`<p class="note">Último análisis: ${fFecha(ev.fechaIA)}${ev.modelo?" con "+esc(ev.modelo):""}. Volver a analizar reemplaza calificaciones y textos.</p>`:""}
   </div>
@@ -1106,7 +1134,6 @@ function pasoReporte(c,s,e){
       </details>
     </div>
     <label><input type="checkbox" id="incGuion" ${s.incGuion?"checked":""}> Agregar como anexo el guion y cronología</label>
-    <label><input type="checkbox" id="ordCrono" ${s.ordenCrono===false?"":"checked"}> Colocar las fotos en orden cronológico según el guion y cronología</label>
     ${falt?`<div class="alert warn">Hay ${falt} punto(s) sin calificar. Puede generar el reporte, pero aparecerán como «Sin calificar».</div>`:""}
     <div class="row"><button class="btn orange" type="submit" id="genW">Generar reporte en Word</button></div>
     <div id="repOut" class="progress"></div>
@@ -1165,10 +1192,8 @@ function pasoReporte(c,s,e){
     const nom=$("#evNom").value.trim();if(!nom){toast("Escriba el nombre de quien evalúa");return}
     lsSet("vime_sim_evaluador",nom);lsSet("vime_sim_cargo",$("#evCargo").value.trim());
     const o={...S.sim[s.id],evaluador:nom,evaluadorCargo:$("#evCargo").value.trim(),fechaEvaluacion:$("#evFecha").value,incGuion:$("#incGuion").checked,logoIzq:selIzq,logoDer:selDer};delete o.id;
-    o.ordenCrono=$("#ordCrono").checked;
     const out=$("#repOut");const b=$("#genW");b.disabled=true;trabajando=true;
     try{
-      if(o.ordenCrono&&renglonesGuion(o.guion).length){await guardarOrdenFotos(s.id,ordenCronologico(S.sim[s.id].fotos||[],o.guion));o.fotos=S.sim[s.id].fotos;o.evaluacion=S.sim[s.id].evaluacion}
       out.textContent="Armando el documento…";
       const blob=await generarDocx({...o,id:s.id},e,t=>out.textContent=t);
       const nombre=`Evidencia_y_Evaluacion_Simulacro_${(e.nombreComercial||e.razonSocial).replace(/[^\wÁÉÍÓÚÑáéíóúñ]+/g,"_").slice(0,40)}_No${String(o.numero).replace(/\W+/g,"")}_${o.fechaEvaluacion||hoyISO()}.docx`;
